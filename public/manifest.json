@@ -1,0 +1,17 @@
+{
+  "name": "Nurset — Техника, мебель и оборудование",
+  "short_name": "Nurset",
+  "description": "Магазин техники, мебели и оборудования в Таразе",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

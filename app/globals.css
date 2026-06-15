@@ -1,26 +1,132 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFFFFF;
+  --foreground: #18181B;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: #FAFAFA;
+
+  /* Blue Brand Palette */
+  --color-brand-50: #EFF6FF;
+  --color-brand-100: #DBEAFE;
+  --color-brand-200: #BFDBFE;
+  --color-brand-300: #93C5FD;
+  --color-brand-400: #60A5FA;
+  --color-brand-500: #3B82F6;
+  --color-brand-600: #1E40AF;
+  --color-brand-700: #1E3A8A;
+  --color-brand-800: #1E2D6D;
+  --color-brand-900: #172554;
+
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ─── Base ─── */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #FFFFFF; }
+::-webkit-scrollbar-thumb { background: #E4E4E7; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
+
+/* ─── Gradient text (now a clean dark minimalist gradient) ─── */
+.text-gradient {
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Hero pattern (clean white background with no heavy colorful gradients) ─── */
+.hero-pattern {
+  background: #FFFFFF;
+}
+
+/* ─── Card hover (minimalist border transition, no translation, no heavy blue shadow) ─── */
+.card-hover {
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.card-hover:hover {
+  border-color: #71717A;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ─── Badge shimmer (disabled or kept minimal) ─── */
+.badge-shimmer {
+  position: relative;
+}
+
+/* ─── Float animations (removed for minimalist style) ─── */
+.float-slow { transform: none; }
+.float-medium { transform: none; }
+.float-fast { transform: none; }
+
+/* ─── Pulse ring (simplified to static) ─── */
+.pulse-ring {
+  position: relative;
+}
+
+/* ─── WhatsApp button pulse (disabled/simplified) ─── */
+.wa-pulse {
+  transition: brightness 0.2s ease-in-out;
+}
+.wa-pulse:hover {
+  filter: brightness(1.05);
+}
+
+/* ─── Toast animations ─── */
+@keyframes toast-in {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes toast-out {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+.toast-enter { animation: toast-in 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+.toast-leave { animation: toast-out 0.2s cubic-bezier(.4,0,.2,1) forwards; }
+
+/* ─── Modal backdrop ─── */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ─── Line clamp ─── */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Image checkerboard for upload preview ─── */
+.img-preview-bg {
+  background: repeating-conic-gradient(#f4f4f5 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+}
+
+/* ─── Admin sidebar active link ─── */
+.admin-link-active {
+  background: #F4F4F5;
+  color: #18181B;
+  font-weight: 600;
 }
