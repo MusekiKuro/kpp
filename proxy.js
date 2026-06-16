@@ -5,7 +5,7 @@ import {
   isAdminUser,
 } from '@/lib/api-auth'
 
-export async function middleware(request) {
+export async function proxy(request) {
   const accessToken = getAccessTokenFromRequest(request)
 
   if (!accessToken) {
