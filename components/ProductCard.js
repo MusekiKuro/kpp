@@ -56,7 +56,7 @@ export default function ProductCard({ product, showCartButton = true }) {
         </h3>
 
         {(() => {
-          const desc = product.description?.replace(/^<!--FEATURES-->\n[\s\S]*?\n<!--\/FEATURES-->\n*/, '')
+          const desc = product.description?.replace(/<!--FEATURES-->[\s\S]*?<!--\/FEATURES-->\s*/, '')
           return desc ? (
             <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
               {desc}

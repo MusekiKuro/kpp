@@ -29,12 +29,25 @@ export async function generateMetadata({ params }) {
 
 function parseProductDescription(description) {
   if (!description) return { features: [], cleanDescription: '' }
-  const featureMatch = description.match(/^<!--FEATURES-->\n([\s\S]*?)\n<!--\/FEATURES-->\n*/)
+  
+  const featureMatch = description.match(/<!--FEATURES-->\s*([\s\S]*?)\s*<!--\/FEATURES-->\s*/)
   if (featureMatch) {
-    const features = featureMatch[1].split('\n').map(s => s.trim()).filter(Boolean)
-    const cleanDescription = description.slice(featureMatch[0].length)
+    let rawFeatures = featureMatch[1].trim()
+    let features;
+    
+    if (rawFeatures.includes('\n')) {
+      features = rawFeatures.split('\n').map(s => s.trim()).filter(Boolean)
+    } else {
+      features = rawFeatures
+        .split(/(?=\s[A-ZА-Я][a-zA-Zа-яА-Я\s]+:)/)
+        .map(s => s.trim())
+        .filter(Boolean)
+    }
+    
+    const cleanDescription = description.replace(/<!--FEATURES-->[\s\S]*?<!--\/FEATURES-->\s*/, '').trim()
     return { features, cleanDescription }
   }
+  
   const features = description
     .split(/[,;]/)
     .map(s => s.trim())
