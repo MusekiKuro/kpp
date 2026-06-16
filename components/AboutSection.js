@@ -30,18 +30,18 @@ export default function AboutSection() {
   ];
 
   return (
-    <section id="about" className="py-16 sm:py-24 bg-white">
+    <section id="about" className="py-20 sm:py-32 bg-slate-50 border-y border-slate-200/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* ── Text ──────────────────────── */}
           <div>
-            <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-brand-600 mb-4">
+            <span className="inline-block rounded-full border border-brand-200 bg-brand-50/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-700 mb-6 shadow-sm">
               О компании
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
+            <h2 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight">
               Nurset — ваш надёжный партнёр
             </h2>
-            <div className="mt-6 space-y-4 text-gray-600 leading-relaxed text-sm">
+            <div className="mt-8 space-y-5 text-slate-600 leading-relaxed text-base">
               <p>
                 С 2013 года мы обеспечиваем жителей Тараза и всего Казахстана качественной бытовой техникой, мебелью и оборудованием. Наша сеть из 5 магазинов позволяет удобно выбирать и покупать товары.
               </p>
@@ -56,16 +56,16 @@ export default function AboutSection() {
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="flex items-center gap-4 rounded-xl border border-brand-200 bg-white p-5"
+                className="flex items-center gap-5 rounded-2xl glass-panel p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                   {stat.icon}
                 </div>
                 <div>
-                  <p className="text-xl font-extrabold text-brand-700">
+                  <p className="font-heading text-2xl font-extrabold text-brand-700">
                     {stat.number}
                   </p>
-                  <p className="text-xs text-gray-500">{stat.label}</p>
+                  <p className="text-sm font-medium text-slate-500">{stat.label}</p>
                 </div>
               </div>
             ))}

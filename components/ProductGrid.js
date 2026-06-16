@@ -37,10 +37,10 @@ export default function ProductGrid({ products }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* ── Section header ──────────────── */}
         <div className="text-center mb-10">
-          <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700 mb-4">
+          <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700 mb-4 shadow-sm animate-fade-in-up">
             Каталог
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+          <h2 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             Наш <span className="text-gradient">ассортимент</span>
           </h2>
         </div>
@@ -56,7 +56,7 @@ export default function ProductGrid({ products }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск товаров..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow"
+              className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-2xl bg-white shadow-sm text-sm text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all hover:shadow-md"
             />
             {searchQuery && (
               <button
@@ -72,15 +72,15 @@ export default function ProductGrid({ products }) {
         </div>
 
         {/* ── Filter pills ────────────────── */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 mb-12">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveFilter(cat)}
-              className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-300 ${
                 activeFilter === cat
-                  ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/25'
-                  : 'border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-600'
+                  ? 'bg-gradient-to-r from-brand-600 to-cyan-500 text-white shadow-lg shadow-brand-500/30 transform scale-105'
+                  : 'border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:border-brand-300 hover:text-brand-600 hover:shadow-md'
               }`}
             >
               {cat}

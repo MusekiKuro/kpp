@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
-import { requireAuth } from '@/lib/api-auth'
+import { requireAdmin } from '@/lib/api-auth'
 
 export async function GET(request, { params }) {
   try {
@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = await requireAuth(request)
+  const auth = await requireAdmin(request)
   if (auth.error) return auth.error
 
   try {
@@ -61,7 +61,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = await requireAuth(request)
+  const auth = await requireAdmin(request)
   if (auth.error) return auth.error
 
   try {

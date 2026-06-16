@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -18,7 +19,26 @@ export default function CartPage() {
   const [error, setError] = useState('')
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    if (e.target.name === 'customer_phone') {
+      let input = e.target.value.replace(/\D/g, '');
+      if (!input) {
+        setForm((prev) => ({ ...prev, customer_phone: '' }));
+        return;
+      }
+      if (input[0] === '8') input = '7' + input.slice(1);
+      else if (input[0] !== '7' && e.target.value.length > 2) input = '7' + input;
+      else if (input[0] !== '7') input = '7'; // Default to +7
+
+      let formatted = '+7';
+      if (input.length > 1) formatted += ' (' + input.substring(1, 4);
+      if (input.length >= 5) formatted += ') ' + input.substring(4, 7);
+      if (input.length >= 8) formatted += '-' + input.substring(7, 9);
+      if (input.length >= 10) formatted += '-' + input.substring(9, 11);
+
+      setForm((prev) => ({ ...prev, customer_phone: formatted }));
+    } else {
+      setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -116,9 +136,9 @@ export default function CartPage() {
             <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 mb-8">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 sm:p-6">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 shrink-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 shrink-0 relative">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                      <Image src={item.image_url} alt={item.name} fill sizes="80px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,6 +219,7 @@ export default function CartPage() {
                     value={form.customer_phone}
                     onChange={handleChange}
                     placeholder="+7 (___) ___-__-__"
+                    maxLength="18"
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow"
                   />
                 </div>

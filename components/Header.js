@@ -47,7 +47,7 @@ export default function Header() {
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/80 backdrop-blur-lg shadow-sm'
+          ? 'glass-panel'
           : 'bg-transparent'
       }`}
     >
@@ -58,7 +58,7 @@ export default function Header() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white font-bold text-lg shadow-md group-hover:shadow-lg transition-shadow">
               N
             </span>
-            <span className="text-xl font-extrabold tracking-tight text-gradient">
+            <span className="font-heading text-2xl font-extrabold tracking-tight text-gradient">
               NURSET
             </span>
           </Link>

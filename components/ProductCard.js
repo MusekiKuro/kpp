@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/components/CartProvider';
 
 export default function ProductCard({ product, showCartButton = true }) {
@@ -23,15 +24,16 @@ export default function ProductCard({ product, showCartButton = true }) {
   return (
     <Link
       href={`/product/${product.id}`}
-      className="card-hover group flex flex-col rounded-xl border border-brand-200 bg-white overflow-hidden"
+      className="card-hover group flex flex-col rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm"
     >
-      <div className="relative aspect-square overflow-hidden bg-brand-50">
+      <div className="relative aspect-square overflow-hidden bg-slate-50">
         {product.image_url ? (
-          <img
+          <Image
             src={product.image_url}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-brand-300">
@@ -42,30 +44,30 @@ export default function ProductCard({ product, showCartButton = true }) {
         )}
 
         {product.category && (
-          <span className="absolute top-3 left-3 rounded bg-brand-800/90 text-[10px] font-semibold tracking-wider uppercase text-white px-2 py-0.5 shadow-sm">
+          <span className="absolute top-3 left-3 rounded-full bg-white/90 backdrop-blur-md text-brand-700 text-[10px] font-extrabold tracking-wider uppercase px-3 py-1 shadow-sm border border-white/50">
             {product.category}
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-4 bg-white">
-        <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 transition-colors">
+      <div className="flex flex-1 flex-col p-5 bg-white">
+        <h3 className="font-heading text-base font-bold text-slate-900 leading-snug line-clamp-2 transition-colors group-hover:text-brand-600">
           {product.name}
         </h3>
 
         {(() => {
           const desc = product.description?.replace(/^<!--FEATURES-->\n[\s\S]*?\n<!--\/FEATURES-->\n*/, '')
           return desc ? (
-            <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
+            <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
               {desc}
             </p>
           ) : null
         })()}
 
-        <div className="mt-3.5 flex gap-2 text-xs">
+        <div className="mt-4 flex gap-2 text-xs">
           <button
             onClick={handleViewInfo}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-white py-2 text-gray-600 hover:bg-brand-50 transition-all font-medium"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-slate-600 hover:bg-slate-100 hover:text-brand-600 transition-all font-bold"
           >
             Инфо
           </button>
@@ -73,7 +75,7 @@ export default function ProductCard({ product, showCartButton = true }) {
           {showCartButton && (
             <button
               onClick={handleAddToCart}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2 text-white hover:bg-brand-500 transition-all font-semibold"
+              className="btn-glow flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 py-2.5 text-white shadow-md hover:shadow-lg hover:shadow-brand-500/25 transition-all font-bold"
             >
               В корзину
             </button>

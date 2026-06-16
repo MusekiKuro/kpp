@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/api-auth'
+import { requireAdmin } from '@/lib/api-auth'
 import { createServerClient } from '@/lib/supabase-server'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
 
 export async function POST(request) {
-  const auth = await requireAuth(request)
+  const auth = await requireAdmin(request)
   if (auth.error) return auth.error
 
   try {
@@ -30,8 +30,7 @@ export async function POST(request) {
     const randomSuffix = Math.random().toString(36).substring(2, 8)
     const filename = `${Date.now()}-${randomSuffix}.${ext}`
 
-    const supabase = createServerClient()
-    const { data, error } = await supabase.storage
+    const { data, error } = await auth.supabase.storage
       .from('product-images')
       .upload(filename, buffer, {
         contentType: file.type,
@@ -42,7 +41,7 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = auth.supabase.storage
       .from('product-images')
       .getPublicUrl(data.path)
 

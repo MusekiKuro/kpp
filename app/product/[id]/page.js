@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createServerClient } from '@/lib/supabase-server'
 import { whatsappLink } from '@/lib/constants'
 import Header from '@/components/Header'
@@ -89,12 +90,14 @@ export default async function ProductPage({ params }) {
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
               {/* Image */}
-              <div className="relative aspect-square bg-gray-50">
+              <div className="relative aspect-square bg-slate-50">
                 {product.image_url ? (
-                  <img
+                  <Image
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300">
