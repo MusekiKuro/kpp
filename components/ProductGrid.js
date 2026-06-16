@@ -32,6 +32,17 @@ export default function ProductGrid({ products }) {
     return result;
   }, [products, activeFilter, searchQuery]);
 
+  const groupedProducts = useMemo(() => {
+    const groups = {};
+    filtered.forEach(p => {
+      const cat = p.category || 'Без категории';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    });
+    // Sort categories alphabetically
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
   return (
     <section id="catalog" className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -88,11 +99,26 @@ export default function ProductGrid({ products }) {
           ))}
         </div>
 
-        {/* ── Grid ────────────────────────── */}
+        {/* ── Grid with Categories ────────────────────────── */}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          <div className="space-y-16">
+            {groupedProducts.map(([category, items]) => (
+              <div key={category} className="animate-fade-in-up">
+                {/* Category Header with Line */}
+                <div className="flex items-center gap-4 mb-8">
+                  <h3 className="font-heading text-2xl font-bold text-slate-800 tracking-tight">
+                    {category}
+                  </h3>
+                  <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
+                </div>
+                
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {items.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         ) : (
