@@ -42,6 +42,8 @@ function parseProductDescription(description) {
   return { features, cleanDescription: description }
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductPage({ params }) {
   const { id } = await params
   const supabase = createServerClient()

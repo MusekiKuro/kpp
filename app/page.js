@@ -6,6 +6,8 @@ import ContactsSection from "@/components/ContactsSection";
 import Footer from "@/components/Footer";
 import { createServerClient } from "@/lib/supabase-server";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   let products = [];
 
