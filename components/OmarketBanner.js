@@ -2,43 +2,54 @@ import Link from 'next/link';
 
 export default function OmarketBanner() {
   return (
-    <section className="relative w-full max-w-5xl py-12 pr-4 sm:pr-6 lg:pr-8">
-      <div 
-        className="relative overflow-hidden rounded-r-3xl bg-blue-700 px-6 py-10 sm:px-12 sm:py-14 shadow-2xl animate-fade-in-up" 
-        style={{ animationDelay: '0.2s' }}
-      >
-        {/* Decorative elements - clean and subtle for Omarket style */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-blue-600 opacity-50 blur-2xl" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-64 w-64 rounded-full bg-blue-800 opacity-50 blur-2xl" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-          <div className="text-left text-white max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white p-2 rounded-lg inline-flex">
-                <span className="text-blue-700 font-bold text-xl tracking-tight">Omarket.kz</span>
-              </div>
-              <span className="text-blue-200 text-sm font-semibold uppercase tracking-wider">Государственные закупки</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-              Мы являемся официальными поставщиками
-            </h2>
-            <p className="text-lg text-blue-100">
-              Приобретайте наши товары через государственный портал закупок. Удобно, быстро и надежно в соответствии с законодательством РК.
-            </p>
-          </div>
+    <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 animate-fade-in-up">
+      <div className="flex justify-start">
+        {/* Medium-small card styled like Omarket.kz */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#0b58c6] border border-blue-800 p-6 sm:p-8 shadow-lg max-w-xl w-full group hover:shadow-xl transition-all duration-300">
           
-          <div className="flex-shrink-0 mt-6 md:mt-0">
-            <a 
-              href="https://omarket.kz/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-lg font-bold text-blue-700 shadow-lg transition-all hover:scale-105 hover:bg-gray-50 hover:shadow-xl focus:ring-4 focus:ring-blue-300"
-            >
-              Перейти на портал
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </a>
+          {/* Decorative subtle background shape */}
+          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 rounded-full bg-blue-500/20 blur-xl pointer-events-none" />
+          <div className="absolute bottom-0 right-0 -mb-12 -mr-6 w-48 h-48 rounded-full bg-yellow-400/10 blur-xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            {/* Header/Logo section */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm select-none">
+                {/* Logo Omarket.kz */}
+                <div className="flex items-center font-extrabold text-base tracking-tight">
+                  <span className="text-[#ff9f1c]">o</span>
+                  <span className="text-[#0b58c6]">market</span>
+                  <span className="text-gray-400 text-xs font-normal">.kz</span>
+                </div>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-200 bg-blue-900/40 px-2.5 py-1 rounded-full border border-blue-700/50">
+                Партнер
+              </span>
+            </div>
+
+            {/* Content */}
+            <h3 className="text-xl font-bold text-white mb-2 leading-snug">
+              Покупайте у нас через Omarket.kz
+            </h3>
+            
+            <p className="text-sm text-blue-100 mb-6 leading-relaxed">
+              Мы зарегистрированы как официальный поставщик. Заказывайте технику, мебель и оборудование быстро и безопасно через портал госзакупок.
+            </p>
+
+            {/* Action Button - Omarket yellow/orange primary style */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://omarket.kz/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff9f1c] hover:bg-[#f39000] active:bg-[#e08100] px-5 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                Перейти в магазин
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </div>
