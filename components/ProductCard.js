@@ -43,11 +43,7 @@ export default function ProductCard({ product, showCartButton = true }) {
           </div>
         )}
 
-        {product.category && (
-          <span className="absolute top-3 left-3 rounded-full bg-white/90 backdrop-blur-md text-brand-700 text-[10px] font-extrabold tracking-wider uppercase px-3 py-1 shadow-sm border border-white/50">
-            {product.category}
-          </span>
-        )}
+
       </div>
 
       <div className="flex flex-1 flex-col p-5 bg-white">
