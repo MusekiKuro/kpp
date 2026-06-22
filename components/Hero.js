@@ -1,9 +1,15 @@
 import { WA_LINK } from '@/lib/constants'
+import OmarketBanner from '@/components/OmarketBanner'
 
 export default function Hero() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center hero-pattern border-b border-slate-100 overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
+        {/* ── Desktop Omarket Banner (Sidebar on the left) ──────────────── */}
+        <div className="hidden xl:block absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20">
+          <OmarketBanner isSidebar={true} />
+        </div>
+
         {/* ── Badge ───────────────────────── */}
         <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/60 backdrop-blur-md px-4 py-1.5 text-xs font-semibold tracking-wider text-brand-700 uppercase mb-8 shadow-sm animate-fade-in-up">
           Тараз, Казахстан — с 2013 года
@@ -55,6 +61,11 @@ export default function Hero() {
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{badge.label}</span>
             </div>
           ))}
+        </div>
+
+        {/* ── Mobile Omarket Banner ────────────────── */}
+        <div className="xl:hidden mt-12 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <OmarketBanner isSidebar={false} />
         </div>
       </div>
     </section>

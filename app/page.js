@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import OmarketBanner from "@/components/OmarketBanner";
 import ProductGrid from "@/components/ProductGrid";
 import AboutSection from "@/components/AboutSection";
 import ContactsSection from "@/components/ContactsSection";
@@ -35,9 +34,6 @@ export default async function HomePage() {
       <main className="flex-1">
         <Hero />
         
-        {/* ═══ БАННЕР OMARKET ═══ */}
-        <OmarketBanner />
-
         {/* ═══ КАТАЛОГ ═══ */}
         <ProductGrid products={products} />
 
