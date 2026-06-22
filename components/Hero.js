@@ -4,7 +4,7 @@ import OmarketBanner from '@/components/OmarketBanner'
 export default function Hero() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center hero-pattern border-b border-slate-100 overflow-hidden">
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
+      <div className="relative w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
         {/* ── Desktop Omarket Banner (Sidebar on the left) ──────────────── */}
         <div className="hidden xl:block absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20">
           <OmarketBanner isSidebar={true} />
