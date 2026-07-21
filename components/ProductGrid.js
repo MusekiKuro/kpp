@@ -119,10 +119,21 @@ export default function ProductGrid({ products = [] }) {
   const [selectedFeature, setSelectedFeature] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const DEFAULT_CATEGORIES = useMemo(() => [
+    'Кондиционеры',
+    'Интерактивные панели',
+    'Мебель',
+    'Моноблоки',
+    'Ноутбуки',
+    'Телевизоры',
+    'Холодильники'
+  ], []);
+
   const categories = useMemo(() => {
-    const unique = [...new Set(products.map((p) => p.category).filter(Boolean))];
-    return unique.sort();
-  }, [products]);
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    const unique = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
+    return Array.from(unique).sort();
+  }, [products, DEFAULT_CATEGORIES]);
 
   // Extract available brands for selected category
   const availableBrands = useMemo(() => {
