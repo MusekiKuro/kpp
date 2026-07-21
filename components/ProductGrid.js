@@ -9,7 +9,35 @@ const getCategoryIcon = (category) => {
   if (cat.includes('кондиционер')) {
     return (
       <svg className="w-12 h-12 mb-4 text-cyan-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m0-18l-3 3m3-3l3 3m-3 15l-3-3m3 3l3-3M3 12h18m-18 0l3-3m-3 3l3 3m15-3l-3-3m3 3l-3 3M5.636 5.636l12.728 12.728m-12.728 0l12.728-12.728" />
+      </svg>
+    );
+  }
+  if (cat.includes('моноблок')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-indigo-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-6-3v3m-9-6h18a1.5 1.5 0 001.5-1.5V5.25A1.5 1.5 0 0021 3.75H3a1.5 1.5 0 00-1.5 1.5V12.75A1.5 1.5 0 003 14.25z" />
+      </svg>
+    );
+  }
+  if (cat.includes('ноутбук')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-blue-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25M2.25 15V6A2.25 2.25 0 014.5 3.75h15A2.25 2.25 0 0121.75 6v9m-19.5 0h19.5" />
+      </svg>
+    );
+  }
+  if (cat.includes('телевизор')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-purple-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-6-3v3m-9-6h18a1.5 1.5 0 001.5-1.5V5.25A1.5 1.5 0 0021 3.75H3a1.5 1.5 0 00-1.5 1.5V12.75A1.5 1.5 0 003 14.25z" />
+      </svg>
+    );
+  }
+  if (cat.includes('холодильник')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-teal-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 3h13.5A1.5 1.5 0 0120.25 4.5v15a1.5 1.5 0 01-1.5 1.5H5.25A1.5 1.5 0 013.75 19.5v-15A1.5 1.5 0 015.25 3zM3.75 10.5h16.5M8.25 6.75h.008v1.5H8.25v-1.5zm0 6.75h.008v2.25H8.25v-2.25z" />
       </svg>
     );
   }
@@ -29,7 +57,7 @@ const getCategoryIcon = (category) => {
   }
   if (cat.includes('водонагрев') || cat.includes('насос')) {
     return (
-      <svg className="w-12 h-12 mb-4 text-blue-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-12 h-12 mb-4 text-cyan-600 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25c-5.385 5.385-8.25 9.224-8.25 12.75a8.25 8.25 0 0016.5 0c0-3.526-2.865-7.365-8.25-12.75z" />
       </svg>
     );
@@ -43,7 +71,7 @@ const getCategoryIcon = (category) => {
   }
   if (cat.includes('монтаж')) {
     return (
-      <svg className="w-12 h-12 mb-4 text-brand-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-12 h-12 mb-4 text-emerald-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014-8.81c-2.28 1.09-4.75 1.875-7.33 2.31M19.175 4.125A24.08 24.08 0 0120.915 12m-1.74-7.875A24.08 24.08 0 0019.175 12" />
       </svg>
     );
@@ -51,7 +79,7 @@ const getCategoryIcon = (category) => {
   
   return (
     <svg className="w-12 h-12 mb-4 text-brand-400 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4m-6 0h8m-11.25-3.75h16.5a1.5 1.5 0 001.5-1.5V5.25A1.5 1.5 0 0020.25 3.75H3.75A1.5 1.5 0 002.25 5.25V6a1.5 1.5 0 001.5 1.5z" />
     </svg>
   );
 };
