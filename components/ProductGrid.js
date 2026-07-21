@@ -41,6 +41,21 @@ const getCategoryIcon = (category) => {
       </svg>
     );
   }
+  if (cat.includes('мебель')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-amber-600 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 .414-.336.75-.75.75h-1.5a.75.75 0 01-.75-.75v-4.25m-10.5 0v4.25c0 .414-.336.75-.75.75h-1.5a.75.75 0 01-.75-.75v-4.25m15 0H3.75m16.5 0c.414 0 .75-.336.75-.75V9.75c0-.414-.336-.75-.75-.75h-1.5a.75.75 0 00-.75.75v1.5H6v-1.5a.75.75 0 00-.75-.75h-1.5a.75.75 0 00-.75.75v3.65c0 .414.336.75.75.75h16.5zM7.5 9V5.25C7.5 4.56 8.06 4 8.75 4h6.5c.69 0 1.25.56 1.25 1.25V9" />
+      </svg>
+    );
+  }
+  if (cat.includes('интерактив') || cat.includes('панел')) {
+    return (
+      <svg className="w-12 h-12 mb-4 text-rose-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3h16.5a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V4.5A1.5 1.5 0 013.75 3zM9 21h6m-3-4.5v4.5" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5v6m-3-3h6" />
+      </svg>
+    );
+  }
   if (cat.includes('котл') || cat.includes('котел')) {
     return (
       <svg className="w-12 h-12 mb-4 text-orange-500 drop-shadow-sm transition-transform group-hover:scale-110 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
