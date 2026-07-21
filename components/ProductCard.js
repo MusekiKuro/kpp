@@ -24,9 +24,9 @@ export default function ProductCard({ product, showCartButton = true }) {
   return (
     <Link
       href={`/product/${product.id}`}
-      className="card-hover group flex flex-col rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm"
+      className="card-hover group flex flex-col rounded-3xl border border-slate-200/60 bg-white overflow-hidden shadow-sm"
     >
-      <div className="relative aspect-square overflow-hidden bg-slate-50">
+      <div className="relative aspect-square overflow-hidden img-preview-bg">
         {product.image_url ? (
           <Image
             src={product.image_url}
@@ -46,8 +46,8 @@ export default function ProductCard({ product, showCartButton = true }) {
 
       </div>
 
-      <div className="flex flex-1 flex-col p-5 bg-white">
-        <h3 className="font-heading text-base font-bold text-slate-900 leading-snug line-clamp-2 transition-colors group-hover:text-brand-600">
+      <div className="flex flex-1 flex-col p-6 bg-white">
+        <h3 className="font-heading text-lg font-bold text-slate-900 leading-snug line-clamp-2 transition-colors group-hover:text-brand-600">
           {product.name}
         </h3>
 
@@ -60,10 +60,10 @@ export default function ProductCard({ product, showCartButton = true }) {
           ) : null
         })()}
 
-        <div className="mt-4 flex gap-2 text-xs">
+        <div className="mt-5 flex gap-3 text-sm">
           <button
             onClick={handleViewInfo}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-slate-600 hover:bg-slate-100 hover:text-brand-600 transition-all font-bold"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-3 text-slate-700 hover:bg-slate-100 hover:text-brand-600 hover:border-slate-300 transition-all font-bold"
           >
             Инфо
           </button>
@@ -71,7 +71,7 @@ export default function ProductCard({ product, showCartButton = true }) {
           {showCartButton && (
             <button
               onClick={handleAddToCart}
-              className="btn-glow flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 py-2.5 text-white shadow-md hover:shadow-lg hover:shadow-brand-500/25 transition-all font-bold"
+              className="btn-glow flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 py-3 text-white shadow-md hover:shadow-xl hover:shadow-brand-500/25 hover:-translate-y-0.5 transition-all font-bold"
             >
               В корзину
             </button>

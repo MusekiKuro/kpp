@@ -1,0 +1,356 @@
+{
+  "140": {
+    "model": "OWM-24TTi",
+    "series": "Серия TTi",
+    "filename": "row_140_OWM-24TTi.png",
+    "url": "/images/products/row_140_OWM-24TTi.png"
+  },
+  "135": {
+    "model": "OWM-24TXi",
+    "series": "Серия TXi",
+    "filename": "row_135_OWM-24TXi.png",
+    "url": "/images/products/row_135_OWM-24TXi.png"
+  },
+  "35": {
+    "model": "ACH-09QF (Wi-Fi)",
+    "series": "Серия FAVORITE",
+    "filename": "row_35_ACH-09QF_Wi-Fi.png",
+    "url": "/images/products/row_35_ACH-09QF_Wi-Fi.png"
+  },
+  "23": {
+    "model": "ACH-09QS (Wi-Fi option)",
+    "series": "Серия STANDARD",
+    "filename": "row_23_ACH-09QS_Wi-Fi_option.png",
+    "url": "/images/products/row_23_ACH-09QS_Wi-Fi_option.png"
+  },
+  "66": {
+    "model": "ACH-09QI (Wi-Fi)",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_66_ACH-09QI_Wi-Fi.png",
+    "url": "/images/products/row_66_ACH-09QI_Wi-Fi.png"
+  },
+  "70": {
+    "model": "ACH-30QI (Wi-Fi)",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_70_ACH-30QI_Wi-Fi.png",
+    "url": "/images/products/row_70_ACH-30QI_Wi-Fi.png"
+  },
+  "13": {
+    "model": "ACH-07QR (Wi-Fi option)",
+    "series": "Серия REGULAR",
+    "filename": "row_13_ACH-07QR_Wi-Fi_option.png",
+    "url": "/images/products/row_13_ACH-07QR_Wi-Fi_option.png"
+  },
+  "75": {
+    "model": "ACH-24MWI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_75_ACH-24MWI.png",
+    "url": "/images/products/row_75_ACH-24MWI.png"
+  },
+  "174": {
+    "model": "DWM-24I",
+    "series": "Серия I",
+    "filename": "row_174_DWM-24I.png",
+    "url": "/images/products/row_174_DWM-24I.png"
+  },
+  "85": {
+    "model": "ACH-24MCI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_85_ACH-24MCI.png",
+    "url": "/images/products/row_85_ACH-24MCI.png"
+  },
+  "82": {
+    "model": "ACH-09MCI",
+    "series": "MODERN CARBON INVERTER",
+    "filename": "row_82_ACH-09MCI.png",
+    "url": "/images/products/row_82_ACH-09MCI.png"
+  },
+  "84": {
+    "model": "ACH-18MCI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_84_ACH-18MCI.png",
+    "url": "/images/products/row_84_ACH-18MCI.png"
+  },
+  "80": {
+    "model": "ACH-24MGI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_80_ACH-24MGI.png",
+    "url": "/images/products/row_80_ACH-24MGI.png"
+  },
+  "77": {
+    "model": "ACH-09MGI",
+    "series": "MODERN GRAPHITE INVERTER",
+    "filename": "row_77_ACH-09MGI.png",
+    "url": "/images/products/row_77_ACH-09MGI.png"
+  },
+  "79": {
+    "model": "ACH-18MGI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_79_ACH-18MGI.png",
+    "url": "/images/products/row_79_ACH-18MGI.png"
+  },
+  "83": {
+    "model": "ACH-12MCI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_83_ACH-12MCI.png",
+    "url": "/images/products/row_83_ACH-12MCI.png"
+  },
+  "17": {
+    "model": "ACH-07QS",
+    "series": "Серия STANDARD",
+    "filename": "row_17_ACH-07QS.png",
+    "url": "/images/products/row_17_ACH-07QS.png"
+  },
+  "1": {
+    "model": "",
+    "series": "",
+    "filename": "row_1_.jpeg",
+    "url": "/images/products/row_1_.jpeg"
+  },
+  "8": {
+    "model": "ACH-09QR",
+    "series": "Серия REGULAR",
+    "filename": "row_8_ACH-09QR.png",
+    "url": "/images/products/row_8_ACH-09QR.png"
+  },
+  "29": {
+    "model": "ACH-09QF",
+    "series": "Серия FAVORITE",
+    "filename": "row_29_ACH-09QF.png",
+    "url": "/images/products/row_29_ACH-09QF.png"
+  },
+  "41": {
+    "model": "ACH-09QG",
+    "series": "Серия QUALITY GREY",
+    "filename": "row_41_ACH-09QG.png",
+    "url": "/images/products/row_41_ACH-09QG.png"
+  },
+  "46": {
+    "model": "ACH-18LC",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_46_ACH-18LC.png",
+    "url": "/images/products/row_46_ACH-18LC.png"
+  },
+  "93": {
+    "model": "ACH-12LCi",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_93_ACH-12LCi.png",
+    "url": "/images/products/row_93_ACH-12LCi.png"
+  },
+  "87": {
+    "model": "ACH-09LI",
+    "series": "LUXURY INVERTER",
+    "filename": "row_87_ACH-09LI.png",
+    "url": "/images/products/row_87_ACH-09LI.png"
+  },
+  "59": {
+    "model": "ACH-09QI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_59_ACH-09QI.png",
+    "url": "/images/products/row_59_ACH-09QI.png"
+  },
+  "48": {
+    "model": "ACH-12CT",
+    "series": "COMFORT TIME",
+    "filename": "row_48_ACH-12CT.png",
+    "url": "/images/products/row_48_ACH-12CT.png"
+  },
+  "156": {
+    "model": "DWM-09NP",
+    "series": "Серия NP",
+    "filename": "row_156_DWM-09NP.png",
+    "url": "/images/products/row_156_DWM-09NP.png"
+  },
+  "97": {
+    "model": "ACH-12IV",
+    "series": "INVERTER VIP",
+    "filename": "row_97_ACH-12IV.png",
+    "url": "/images/products/row_97_ACH-12IV.png"
+  },
+  "123": {
+    "model": "OWM-09CP",
+    "series": "Серия CP",
+    "filename": "row_123_OWM-09CP.png",
+    "url": "/images/products/row_123_OWM-09CP.png"
+  },
+  "161": {
+    "model": "DWM-07CP",
+    "series": "Серия CP",
+    "filename": "row_161_DWM-07CP.png",
+    "url": "/images/products/row_161_DWM-07CP.png"
+  },
+  "53": {
+    "model": "ACH-09СI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_53_ACH-09СI.png",
+    "url": "/images/products/row_53_ACH-09СI.png"
+  },
+  "108": {
+    "model": "AM-09T",
+    "series": "Серия T",
+    "filename": "row_108_AM-09T.png",
+    "url": "/images/products/row_108_AM-09T.png"
+  },
+  "99": {
+    "model": "ACP-24I",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_99_ACP-24I.png",
+    "url": "/images/products/row_99_ACP-24I.png"
+  },
+  "95": {
+    "model": "ACH-24LCi",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_95_ACH-24LCi.png",
+    "url": "/images/products/row_95_ACH-24LCi.png"
+  },
+  "90": {
+    "model": "ACH-24LI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_90_ACH-24LI.png",
+    "url": "/images/products/row_90_ACH-24LI.png"
+  },
+  "63": {
+    "model": "ACH-30QI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_63_ACH-30QI.png",
+    "url": "/images/products/row_63_ACH-30QI.png"
+  },
+  "56": {
+    "model": "ACH-24СI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_56_ACH-24СI.png",
+    "url": "/images/products/row_56_ACH-24СI.png"
+  },
+  "106": {
+    "model": "ACP-24LB",
+    "series": "Серия LB",
+    "filename": "row_106_ACP-24LB.png",
+    "url": "/images/products/row_106_ACP-24LB.png"
+  },
+  "104": {
+    "model": "ACP-36AE",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_104_ACP-36AE.png",
+    "url": "/images/products/row_104_ACP-36AE.png"
+  },
+  "130": {
+    "model": "OWM-24TI",
+    "series": "Серия TI",
+    "filename": "row_130_OWM-24TI.png",
+    "url": "/images/products/row_130_OWM-24TI.png"
+  },
+  "152": {
+    "model": "OM-09T",
+    "series": "Серия T",
+    "filename": "row_152_OM-09T.png",
+    "url": "/images/products/row_152_OM-09T.png"
+  },
+  "142": {
+    "model": "OFS-24T",
+    "series": "Серия T",
+    "filename": "row_142_OFS-24T.png",
+    "url": "/images/products/row_142_OFS-24T.png"
+  },
+  "127": {
+    "model": "OWM-09TI",
+    "series": "Серия TI",
+    "filename": "row_127_OWM-09TI.png",
+    "url": "/images/products/row_127_OWM-09TI.png"
+  },
+  "112": {
+    "model": "OWM-09TN",
+    "series": "Серия TN",
+    "filename": "row_112_OWM-09TN.png",
+    "url": "/images/products/row_112_OWM-09TN.png"
+  },
+  "165": {
+    "model": "DWM-07WP",
+    "series": "Серия WP",
+    "filename": "row_165_DWM-07WP.png",
+    "url": "/images/products/row_165_DWM-07WP.png"
+  },
+  "118": {
+    "model": "OWM-09TP",
+    "series": "Серия TP",
+    "filename": "row_118_OWM-09TP.png",
+    "url": "/images/products/row_118_OWM-09TP.png"
+  },
+  "145": {
+    "model": "OFS-24TO",
+    "series": "Серия TO",
+    "filename": "row_145_OFS-24TO.png",
+    "url": "/images/products/row_145_OFS-24TO.png"
+  },
+  "133": {
+    "model": "OWM-12TXi",
+    "series": "Серия TXi",
+    "filename": "row_133_OWM-12TXi.png",
+    "url": "/images/products/row_133_OWM-12TXi.png"
+  },
+  "137": {
+    "model": "OWM-09TTi",
+    "series": "Серия TTi",
+    "filename": "row_137_OWM-09TTi.png",
+    "url": "/images/products/row_137_OWM-09TTi.png"
+  },
+  "14": {
+    "model": "ACH-09QR (Wi-Fi option)",
+    "series": "Серия REGULAR",
+    "filename": "row_14_ACH-09QR_Wi-Fi_option.png",
+    "url": "/images/products/row_14_ACH-09QR_Wi-Fi_option.png"
+  },
+  "22": {
+    "model": "ACH-07QS (Wi-Fi option)",
+    "series": "Серия STANDARD",
+    "filename": "row_22_ACH-07QS_Wi-Fi_option.png",
+    "url": "/images/products/row_22_ACH-07QS_Wi-Fi_option.png"
+  },
+  "73": {
+    "model": "ACH-12MWI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_73_ACH-12MWI.png",
+    "url": "/images/products/row_73_ACH-12MWI.png"
+  },
+  "72": {
+    "model": "ACH-09MWI",
+    "series": "MODERN WHITE INVERTER",
+    "filename": "row_72_ACH-09MWI.png",
+    "url": "/images/products/row_72_ACH-09MWI.png"
+  },
+  "74": {
+    "model": "ACH-18MWI",
+    "series": "Серия LUXURY COMFORT",
+    "filename": "row_74_ACH-18MWI.png",
+    "url": "/images/products/row_74_ACH-18MWI.png"
+  },
+  "171": {
+    "model": "DWM-09I",
+    "series": "Серия I",
+    "filename": "row_171_DWM-09I.png",
+    "url": "/images/products/row_171_DWM-09I.png"
+  },
+  "147": {
+    "model": "OFS-24CPI",
+    "series": "Серия CPI",
+    "filename": "row_147_OFS-24CPI.png",
+    "url": "/images/products/row_147_OFS-24CPI.png"
+  },
+  "150": {
+    "model": "OFS-60CPI",
+    "series": "Серия CPI",
+    "filename": "row_150_OFS-60CPI.png",
+    "url": "/images/products/row_150_OFS-60CPI.png"
+  },
+  "228": {
+    "model": "",
+    "series": "AMD-12RМI/AC-12RМI",
+    "filename": "row_228_.png",
+    "url": "/images/products/row_228_.png"
+  },
+  "229": {
+    "model": "",
+    "series": "AMD-18RМI/AC-18RMI",
+    "filename": "row_229_.png",
+    "url": "/images/products/row_229_.png"
+  }
+}
