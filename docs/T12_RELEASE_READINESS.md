@@ -55,20 +55,21 @@
 Дата проведения: 2026-07-26.
 
 - **Локальные проверки:**
-  - `npm.cmd run db:contract-check`: пройден (код 0). Подтверждена статическая целостность контрактов 10 миграций.
+  - `npm.cmd run db:contract-check`: пройден (код 0). Подтверждена статическая целостность контрактов 11 миграций.
   - `git diff --check`: пройден (код 0). Утечки секретов и ошибок пробелов не обнаружены.
   - `npm.cmd run test`: пройден (64/64 теста).
 - **Список миграций к применению на Staging (в порядке файлов):**
-  1. `20260722000000_harden_security_and_indexes.sql`
-  2. `20260722010000_add_catalog_domain.sql`
-  3. `20260723000000_add_quote_idempotency_consent.sql`
-  4. `20260723010000_add_t08_cms_fields.sql`
-  5. `20260723020000_add_import_apply_rpc.sql`
-  6. `20260724000000_secure_catalog_boundary.sql`
-  7. `20260724010000_disable_public_orders_insert.sql`
-  8. `20260724020000_add_cms_atomic_update_and_triggers.sql`
-  9. `20260724030000_add_gallery_atomic_and_primary_invariant.sql`
-  10. `20260724040000_complete_catalog_runtime_contracts.sql`
+  1. `20260721000000_create_legacy_baseline.sql`
+  2. `20260722000000_harden_security_and_indexes.sql`
+  3. `20260722010000_add_catalog_domain.sql`
+  4. `20260723000000_add_quote_idempotency_consent.sql`
+  5. `20260723010000_add_t08_cms_fields.sql`
+  6. `20260723020000_add_import_apply_rpc.sql`
+  7. `20260724000000_secure_catalog_boundary.sql`
+  8. `20260724010000_disable_public_orders_insert.sql`
+  9. `20260724020000_add_cms_atomic_update_and_triggers.sql`
+  10. `20260724030000_add_gallery_atomic_and_primary_invariant.sql`
+  11. `20260724040000_complete_catalog_runtime_contracts.sql`
 - **Human Gate Status:** Ожидает подтверждённого staging project ref, backup/restore point и ручного запуска оператором по [`STAGING_MIGRATION_RUNBOOK.md`](./STAGING_MIGRATION_RUNBOOK.md).
 
 ## Обязательные human gates

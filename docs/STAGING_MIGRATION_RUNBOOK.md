@@ -42,18 +42,19 @@ Get-ChildItem -LiteralPath .\supabase\migrations -File |
   Select-Object -ExpandProperty Name
 ```
 
-Ожидается ровно десять миграций в следующем порядке:
+Ожидается ровно одиннадцать миграций в следующем порядке:
 
-1. `20260722000000_harden_security_and_indexes.sql`
-2. `20260722010000_add_catalog_domain.sql`
-3. `20260723000000_add_quote_idempotency_consent.sql`
-4. `20260723010000_add_t08_cms_fields.sql`
-5. `20260723020000_add_import_apply_rpc.sql`
-6. `20260724000000_secure_catalog_boundary.sql`
-7. `20260724010000_disable_public_orders_insert.sql`
-8. `20260724020000_add_cms_atomic_update_and_triggers.sql`
-9. `20260724030000_add_gallery_atomic_and_primary_invariant.sql`
-10. `20260724040000_complete_catalog_runtime_contracts.sql`
+1. `20260721000000_create_legacy_baseline.sql`
+2. `20260722000000_harden_security_and_indexes.sql`
+3. `20260722010000_add_catalog_domain.sql`
+4. `20260723000000_add_quote_idempotency_consent.sql`
+5. `20260723010000_add_t08_cms_fields.sql`
+6. `20260723020000_add_import_apply_rpc.sql`
+7. `20260724000000_secure_catalog_boundary.sql`
+8. `20260724010000_disable_public_orders_insert.sql`
+9. `20260724020000_add_cms_atomic_update_and_triggers.sql`
+10. `20260724030000_add_gallery_atomic_and_primary_invariant.sql`
+11. `20260724040000_complete_catalog_runtime_contracts.sql`
 
 Любое отличие требует остановки и review. Статический contract check не
 доказывает, что SQL применим к реальной базе.
@@ -101,7 +102,7 @@ migration history. При расхождении не запускать `migrat
 supabase db push --linked --dry-run
 ```
 
-Оператор должен увидеть только ожидаемые десять миграций или корректный
+Оператор должен увидеть только ожидаемые одиннадцать миграций или корректный
 неприменённый хвост из этого списка. Не использовать `--include-seed`.
 
 После отдельного подтверждения точного dry-run владельцем:

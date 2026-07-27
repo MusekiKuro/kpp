@@ -44,6 +44,7 @@ unchecked.
    approved Supabase migration process:
 
    ```text
+   supabase/migrations/20260721000000_create_legacy_baseline.sql
    supabase/migrations/20260722000000_harden_security_and_indexes.sql
    supabase/migrations/20260722010000_add_catalog_domain.sql
    supabase/migrations/20260723000000_add_quote_idempotency_consent.sql
