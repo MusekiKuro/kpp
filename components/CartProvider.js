@@ -10,7 +10,11 @@ function readStorage() {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && typeof item.id === 'string' && Number.isInteger(item.qty) && item.qty > 0)
+      .map((item) => ({ id: item.id, qty: Math.min(item.qty, 99) }));
   } catch {
     return [];
   }
@@ -52,15 +56,7 @@ export default function CartProvider({ children }) {
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
-      return [
-        ...prev,
-        {
-          id: product.id,
-          name: product.name,
-          image_url: product.image_url,
-          qty: 1,
-        },
-      ];
+      return [...prev, { id: product.id, qty: 1 }];
     });
   }, []);
 

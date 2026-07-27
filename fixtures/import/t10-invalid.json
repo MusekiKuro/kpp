@@ -1,0 +1,20 @@
+[
+  {
+    "source_type": "json",
+    "source_reference": "agent-fixture",
+    "source_hash": null,
+    "external_id": null,
+    "sku": "not allowed spaces",
+    "name_ru": "Неполная строка",
+    "category_slug": "office",
+    "price_mode": "exact",
+    "price_amount": null,
+    "currency": "USD",
+    "stock_status": "unknown",
+    "publication_status": "published",
+    "publish_ru": true,
+    "publish_kk": true,
+    "translation_status_kk": "missing",
+    "unknown_fact": "must be rejected"
+  }
+]

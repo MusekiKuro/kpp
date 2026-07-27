@@ -1,0 +1,29 @@
+[
+  {
+    "source_type": "json",
+    "source_reference": "ignored-by-server",
+    "source_hash": "ignored-by-server",
+    "external_id": "EXT-001",
+    "sku": "SKU-001",
+    "slug": "office-chair",
+    "category_slug": "office",
+    "brand_slug": "acme",
+    "name_ru": "Офисное кресло",
+    "name_kk": "Кеңсе орындығы",
+    "short_description_ru": "Кресло для офиса",
+    "short_description_kk": "Кеңсеге арналған орындық",
+    "description_ru": "Описание кресла",
+    "description_kk": "Орындық сипаттамасы",
+    "price_mode": "exact",
+    "price_amount": 25000,
+    "old_price_amount": null,
+    "currency": "KZT",
+    "stock_status": "in_stock",
+    "publication_status": "draft",
+    "publish_ru": false,
+    "publish_kk": false,
+    "translation_status_kk": "verified",
+    "is_featured": false,
+    "image_url": "https://cdn.example.test/office-chair.jpg"
+  }
+]

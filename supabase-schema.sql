@@ -1,669 +1,1341 @@
--- ============================================================
--- Nurset: Supabase Schema (чистый)
--- Запустите весь скрипт в Supabase SQL Editor
--- ============================================================
+-- Nurset database schema and RLS policies.
+-- Note: supabase/migrations contains the authoritative, ordered migration history.
+-- This file is kept in sync with the final secure database schema.
 
--- 1. Таблица товаров
-CREATE TABLE IF NOT EXISTS products (
+-- 1. Tables
+
+CREATE TABLE IF NOT EXISTS public.categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+  slug TEXT NOT NULL UNIQUE,
+  name_ru TEXT NOT NULL,
+  name_kk TEXT,
+  description_ru TEXT,
+  description_kk TEXT,
+  seo_title_ru TEXT,
+  seo_title_kk TEXT,
+  seo_description_ru TEXT,
+  seo_description_kk TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.brands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL UNIQUE,
+  description_ru TEXT,
+  description_kk TEXT,
+  logo_url TEXT,
+  website_url TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.attributes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  code TEXT NOT NULL UNIQUE,
+  name_ru TEXT NOT NULL,
+  name_kk TEXT,
+  data_type TEXT NOT NULL,
+  unit_ru TEXT,
+  unit_kk TEXT,
+  options JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (
+    jsonb_typeof(options) = 'array'
+    AND NOT jsonb_path_exists(options, '$[*] ? (@.type() != "string")')
+  ),
+  is_filterable BOOLEAN NOT NULL DEFAULT false,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   category TEXT NOT NULL,
   description TEXT,
   image_url TEXT,
-  sort_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  sku TEXT,
+  external_id TEXT,
+  slug TEXT,
+  category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
+  name_ru TEXT,
+  name_kk TEXT,
+  short_description_ru TEXT,
+  short_description_kk TEXT,
+  description_ru TEXT,
+  description_kk TEXT,
+  price_mode TEXT NOT NULL DEFAULT 'request',
+  price_amount NUMERIC(14, 2),
+  old_price_amount NUMERIC(14, 2),
+  currency CHAR(3) NOT NULL DEFAULT 'KZT',
+  stock_status TEXT NOT NULL DEFAULT 'unknown',
+  warranty_ru TEXT,
+  warranty_kk TEXT,
+  publication_status TEXT NOT NULL DEFAULT 'draft',
+  publish_ru BOOLEAN NOT NULL DEFAULT false,
+  publish_kk BOOLEAN NOT NULL DEFAULT false,
+  translation_status_kk TEXT NOT NULL DEFAULT 'missing',
+  is_featured BOOLEAN NOT NULL DEFAULT false,
+  source_type TEXT,
+  source_reference TEXT,
+  source_hash TEXT,
+  seo_title_ru TEXT,
+  seo_title_kk TEXT,
+  seo_description_ru TEXT,
+  seo_description_kk TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2. Таблица заявок
-CREATE TABLE IF NOT EXISTS orders (
+CREATE TABLE IF NOT EXISTS public.product_images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  storage_path TEXT,
+  source_url TEXT,
+  alt_ru TEXT,
+  alt_kk TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_primary BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.product_attribute_values (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  attribute_id UUID NOT NULL REFERENCES public.attributes(id) ON DELETE CASCADE,
+  value_text_ru TEXT,
+  value_text_kk TEXT,
+  value_number NUMERIC(14, 4),
+  value_boolean BOOLEAN,
+  value_option TEXT,
+  raw_value TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(product_id, attribute_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
   customer_message TEXT,
   items JSONB NOT NULL DEFAULT '[]'::jsonb,
-  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'done')),
-  created_at TIMESTAMPTZ DEFAULT now()
+  status TEXT NOT NULL DEFAULT 'new',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 3. RLS для products
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.quote_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_email TEXT,
+  organization TEXT,
+  bin TEXT,
+  city TEXT,
+  customer_message TEXT,
+  locale TEXT NOT NULL DEFAULT 'ru',
+  consent_personal_data BOOLEAN NOT NULL DEFAULT false,
+  consent_at TIMESTAMPTZ,
+  idempotency_key TEXT UNIQUE,
+  source_url TEXT,
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  utm_term TEXT,
+  utm_content TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  internal_comment TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-DROP POLICY IF EXISTS "Public read access for products" ON products;
-CREATE POLICY "Public read access for products"
-  ON products FOR SELECT
-  USING (true);
+CREATE TABLE IF NOT EXISTS public.quote_request_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quote_request_id UUID NOT NULL REFERENCES public.quote_requests(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  snapshot_sku TEXT,
+  snapshot_name TEXT NOT NULL,
+  snapshot_category_name TEXT,
+  snapshot_brand_name TEXT,
+  snapshot_price_mode TEXT,
+  snapshot_price_amount NUMERIC(14, 2),
+  snapshot_currency CHAR(3),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-DROP POLICY IF EXISTS "Authenticated insert products" ON products;
-CREATE POLICY "Authenticated insert products"
-  ON products FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
+CREATE TABLE IF NOT EXISTS public.import_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  filename TEXT NOT NULL,
+  source_type TEXT NOT NULL,
+  source_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'staged',
+  summary JSONB DEFAULT '{}'::jsonb,
+  created_by UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  applied_at TIMESTAMPTZ
+);
 
-DROP POLICY IF EXISTS "Authenticated update products" ON products;
-CREATE POLICY "Authenticated update products"
-  ON products FOR UPDATE
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+CREATE TABLE IF NOT EXISTS public.import_rows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  batch_id UUID NOT NULL REFERENCES public.import_batches(id) ON DELETE CASCADE,
+  row_number INTEGER NOT NULL,
+  source_row JSONB NOT NULL,
+  normalized_payload JSONB,
+  matched_product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  proposed_action TEXT NOT NULL,
+  validation_errors JSONB DEFAULT '[]'::jsonb,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(batch_id, row_number)
+);
 
-DROP POLICY IF EXISTS "Authenticated delete products" ON products;
-CREATE POLICY "Authenticated delete products"
-  ON products FOR DELETE
-  TO authenticated
-  USING (true);
+CREATE TABLE IF NOT EXISTS public.storage_cleanup_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bucket TEXT NOT NULL DEFAULT 'product-images',
+  storage_path TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  attempts INT NOT NULL DEFAULT 0,
+  last_error TEXT,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  lease_token UUID,
+  lease_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  CONSTRAINT storage_cleanup_processing_lease_check CHECK (
+    (status = 'processing' AND lease_token IS NOT NULL AND lease_expires_at IS NOT NULL)
+    OR
+    (status <> 'processing' AND lease_token IS NULL AND lease_expires_at IS NULL)
+  )
+);
 
--- 4. RLS для orders
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_storage_cleanup_queue_active_path
+  ON public.storage_cleanup_queue (bucket, storage_path)
+  WHERE status IN ('pending', 'processing');
 
-DROP POLICY IF EXISTS "Public insert orders" ON orders;
-CREATE POLICY "Public insert orders"
-  ON orders FOR INSERT
-  WITH CHECK (true);
+-- 2. RLS Enablement
 
-DROP POLICY IF EXISTS "Authenticated read orders" ON orders;
-CREATE POLICY "Authenticated read orders"
-  ON orders FOR SELECT
-  TO authenticated
-  USING (true);
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attributes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_attribute_values ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quote_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quote_request_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.import_rows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.storage_cleanup_queue ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Authenticated update orders" ON orders;
-CREATE POLICY "Authenticated update orders"
-  ON orders FOR UPDATE
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+-- 3. Functions & Helper RPCs
 
-DROP POLICY IF EXISTS "Authenticated delete orders" ON orders;
-CREATE POLICY "Authenticated delete orders"
-  ON orders FOR DELETE
-  TO authenticated
-  USING (true);
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);
+$$;
 
--- 5. Storage bucket для изображений
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('product-images', 'product-images', true)
-ON CONFLICT (id) DO NOTHING;
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
 
--- Удаляем старые политики перед созданием новых
-DROP POLICY IF EXISTS "Public read product images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated upload product images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated delete product images" ON storage.objects;
+CREATE OR REPLACE FUNCTION public.is_product_published(p_product_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.products
+    WHERE id = p_product_id
+      AND publication_status = 'published'
+      AND (publish_ru OR (publish_kk AND translation_status_kk = 'verified'))
+  );
+$$;
 
--- Политика: все могут читать файлы
-CREATE POLICY "Public read product images"
-  ON storage.objects FOR SELECT
-  TO public
-  USING (bucket_id = 'product-images');
+REVOKE ALL ON FUNCTION public.is_product_published(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_product_published(UUID) TO anon, authenticated;
 
--- Политика: авторизованные могут загружать
-CREATE POLICY "Authenticated upload product images"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'product-images');
+-- 4. Triggers
 
--- Политика: авторизованные могут удалять
-CREATE POLICY "Authenticated delete product images"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (bucket_id = 'product-images');
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
 
--- 6. Начальные данные (Ноутбуки, Моноблоки, Кондиционеры, Мебель)
--- Народные бренды кондиционеров (Midea, Artel, Almacom, Oasis)
--- Доступные брендовые ноутбуки и моноблоки (Lenovo, Acer, HP)
-INSERT INTO products (name, category, description, image_url, sort_order) VALUES
+DROP TRIGGER IF EXISTS trg_products_updated_at ON public.products;
+CREATE TRIGGER trg_products_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ НОУТБУКИ ═══
-('Ноутбук Lenovo IdeaPad Slim 3 15IAH8', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i3-12450H (8 ядер)
-RAM: 8 ГБ DDR4
-SSD: 256 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Вес: 1.62 кг
-<!--/FEATURES-->
-Доступный ноутбук для учёбы и офисной работы. Процессор H-серии обеспечивает высокую производительность в многозадачности. Тонкий корпус и цифровой блок клавиатуры.', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80', 1),
-('Ноутбук Lenovo IdeaPad Slim 3 15IRH8', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i5-13420H (8 ядер)
-RAM: 8 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Вес: 1.63 кг
-<!--/FEATURES-->
-Универсальный ноутбук для работы и учёбы. Мощный процессор 13-го поколения, быстрый SSD на 512 ГБ. Полноразмерная клавиатура с цифровым блоком.', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80', 2),
-('Ноутбук Lenovo IdeaPad 1 15AMN7', 'Ноутбуки', '<!--FEATURES-->
-Процессор: AMD Ryzen 3 7320U
-RAM: 8 ГБ LPDDR5
-SSD: 256 ГБ NVMe
-Дисплей: 15.6" TN 1920×1080
-Графика: AMD Radeon 610M
-ОС: без ОС
-Вес: 1.58 кг
-<!--/FEATURES-->
-Самый доступный ноутбук в линейке. Идеален для простых задач: документы, интернет, мессенджеры. Компактный и лёгкий.', 'https://xstore.md/images/product/2025/01/lenovo-ideapad-1-15amn7-2-xstore-md-31.jpg', 3),
-('Ноутбук Acer Aspire 3 A315-44P', 'Ноутбуки', '<!--FEATURES-->
-Процессор: AMD Ryzen 5 5625U (6 ядер)
-RAM: 8 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: AMD Radeon Graphics
-ОС: без ОС
-Вес: 1.78 кг
-<!--/FEATURES-->
-Надёжный ноутбук для повседневных задач. Процессор AMD Ryzen 5 справляется с офисными приложениями и многозадачностью. Качественный IPS-дисплей.', 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&auto=format&fit=crop&q=80', 4),
-('Ноутбук Acer Aspire 5 A515-58M', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i5-1335U (10 ядер)
-RAM: 16 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Вес: 1.76 кг
-<!--/FEATURES-->
-Производительный ноутбук с 16 ГБ оперативной памяти. Графика Intel Iris Xe подходит для лёгкой обработки фото и видео. Металлическая крышка.', 'https://laptopmedia.com/wp-content/uploads/2023/05/2-16-e1683646097744.jpg', 5),
-('Ноутбук HP 15s-fq5000', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i3-1215U (6 ядер)
-RAM: 8 ГБ DDR4
-SSD: 256 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Вес: 1.69 кг
-<!--/FEATURES-->
-Доступный ноутбук HP для дома и офиса. Тихая работа, хороший экран и достаточная производительность для повседневных задач.', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80', 6),
-('Ноутбук HP 250 G10', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i5-1335U (10 ядер)
-RAM: 8 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Вес: 1.74 кг
-<!--/FEATURES-->
-Бизнес-ноутбук для офиса и учёбы. Надёжная сборка HP, быстрый процессор и вместительный SSD. Идеален для организаций.', 'https://files.foxtrot.com.ua/PhotoNew/img_0_58_28475_0_1_vW6q7f.jpg', 7),
-('Ноутбук Acer Aspire Lite AL15-52', 'Ноутбуки', '<!--FEATURES-->
-Процессор: Intel Core i5-1235U (10 ядер)
-RAM: 16 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 15.6" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Вес: 1.59 кг
-<!--/FEATURES-->
-Тонкий и лёгкий ноутбук с большим объёмом памяти. Металлический корпус, узкие рамки экрана. Отлично подходит для мобильной работы.', 'https://www.notebookcheck.it/uploads/tx_nbc2/Acer_Aspire_Lite_15_AL15-52__1_.JPG', 8),
+DROP TRIGGER IF EXISTS trg_categories_updated_at ON public.categories;
+CREATE TRIGGER trg_categories_updated_at BEFORE UPDATE ON public.categories FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ МОНОБЛОКИ ═══
-('Моноблок Lenovo IdeaCentre AIO 3 24IAP7', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i3-1215U
-RAM: 8 ГБ DDR4
-SSD: 256 ГБ NVMe
-Дисплей: 23.8" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Цвет: белый
-<!--/FEATURES-->
-Доступный моноблок для дома и офиса. Компактный дизайн, IPS-экран с хорошими углами обзора. Всё необходимое в одном устройстве.', 'https://www.technodom.kz/_next/image?url=https://api.technodom.kz/f3/api/v1/images/800/800/monoblok_238_lenovo_ideacentre_aio_3_24ada6_white_a3050u_8_267322_1.jpg&w=3840&q=85', 9),
-('Моноблок Lenovo IdeaCentre AIO 3 27IAP7', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i5-1235U
-RAM: 8 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 27" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Цвет: черный
-<!--/FEATURES-->
-Большой 27-дюймовый моноблок для продуктивной работы. Мощный процессор Core i5, быстрый SSD. Встроенные динамики и веб-камера.', 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop&q=80', 10),
-('Моноблок Acer Aspire C24-1800', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i3-1305U
-RAM: 8 ГБ DDR4
-SSD: 256 ГБ NVMe
-Дисплей: 23.8" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Цвет: серебристый
-<!--/FEATURES-->
-Компактный моноблок Acer с тонким корпусом. Занимает минимум места на столе. Беспроводная мышь и клавиатура в комплекте.', 'https://www.regard.ru/api/site/cacheimg/goods/6417171/358', 11),
-('Моноблок Acer Aspire C27-1800', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i5-1335U
-RAM: 16 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 27" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Цвет: серебристый
-<!--/FEATURES-->
-Производительный моноблок с большим 27-дюймовым экраном. 16 ГБ RAM для комфортной многозадачности. Wi-Fi 6 и Bluetooth 5.2.', 'https://kvanto.com.ua/content/images/20/1800x1558l80mc0/35641743044819.jpg', 12),
-('Моноблок HP All-in-One 24-cb1038ci', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i3-1215U
-RAM: 8 ГБ DDR4
-SSD: 256 ГБ NVMe
-Дисплей: 23.8" IPS 1920×1080
-Графика: Intel UHD Graphics
-ОС: без ОС
-Цвет: белый
-<!--/FEATURES-->
-Стильный моноблок HP с тонкими рамками. Встроенная веб-камера с шторкой приватности. Надёжное решение для дома и офиса.', 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&auto=format&fit=crop&q=80', 13),
-('Моноблок HP ProOne 240 G10', 'Моноблоки', '<!--FEATURES-->
-Процессор: Intel Core i5-1335U
-RAM: 8 ГБ DDR4
-SSD: 512 ГБ NVMe
-Дисплей: 23.8" IPS 1920×1080
-Графика: Intel Iris Xe
-ОС: без ОС
-Цвет: черный
-<!--/FEATURES-->
-Бизнес-моноблок для офисов и организаций. Прочная сборка, быстрый процессор. Поддержка VESA-крепления для монтажа на стену.', 'https://hp-rus.com/upload/iblock/35d/p7hyec2xsalkh25wod4rzkjrrrmpkry7/bez-imeni_2_opt.webp', 14),
+DROP TRIGGER IF EXISTS trg_brands_updated_at ON public.brands;
+CREATE TRIGGER trg_brands_updated_at BEFORE UPDATE ON public.brands FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ КОНДИЦИОНЕРЫ ═══
-('ALMACOM ACH-12QS белый', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 12000 BTU/ч
-Мощность охлаждения: 3500 Вт
-Мощность обогрева: 3600 Вт
-Обслуживаемая площадь: 35 кв.м
-Класс энергоэффективности: A
-Уровень шума: 42 дБ
-Тип хладагента: R 410A
-Габариты внутреннего блока: 822×295×198 мм
-Габариты наружного блока: 780×545×285 мм
-Вес внешнего блока: 27 кг
-Код товара: 109703258
-Цена: Цена по запросу
-<!--/FEATURES-->
-Настенная сплит-система ALMACOM ACH-12QS для охлаждения и обогрева помещений площадью до 35 кв.м. Поддерживает дополнительные режимы осушения воздуха, самоочистки и ночной режим. В комплекте монтажный набор, медная инсталляция, электрический кабель и пульт с подсветкой.', 'https://resources.cdn-kaspi.kz/img/m/p/p65/p33/49945993.jpg?format=gallery-medium', 15),
-('Acron Plus CSH-07DR белый', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 7000 BTU/ч
-Мощность охлаждения: 639 Вт
-Обслуживаемая площадь: 21 кв.м
-Класс энергоэффективности: A
-Уровень шума: 38 дБ
-Код товара: 161025159
-Цена: Цена по запросу
-<!--/FEATURES-->
-Настенный кондиционер Acron Plus CSH-07DR для помещений площадью до 21 кв.м. В комплекте монтажный комплект, внутренний и наружный блоки, кронштейн, пульт ДУ, дренажный шланг.', 'https://resources.cdn-kaspi.kz/img/m/p/p30/p6f/131541654.png?format=gallery-medium', 16),
-('Klima KAC-H07A4/FBR1', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 7000 BTU/ч
-Мощность охлаждения: 2050 Вт
-Потребляемая мощность при обогреве: 2200 Вт
-Обслуживаемая площадь: 21 кв.м
-Режим приточной вентиляции: Да
-Класс энергоэффективности: A
-Уровень шума: 48 дБ
-Тип хладагента: R 32
-Вес внутреннего блока: 6.5 кг
-Вес внешнего блока: 20.5 кг
-Код товара: 118462405
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Klima KAC-H07A4/FBR1 настенного типа. Оснащена режимом приточной вентиляции. В комплекте кондиционер, наружный блок, медная инсталляция, пульт ДУ, дренажный шланг и электрический кабель.', 'https://resources.cdn-kaspi.kz/img/m/p/p51/pd5/135263745.jpg?format=gallery-medium', 17),
-('ALMACOM ACH-18QS белый', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 18000 BTU/ч
-Мощность охлаждения: 5200 Вт
-Мощность обогрева: 5250 Вт
-Обслуживаемая площадь: 55 кв.м
-Класс энергоэффективности: A
-Уровень шума: 47 дБ
-Тип хладагента: R 410A
-Габариты внутреннего блока: 960x316x212 мм
-Габариты наружного блока: 800x545x315 мм
-Вес внешнего блока: 36 кг
-Код товара: 109703283
-Цена: Цена по запросу
-<!--/FEATURES-->
-Настенная сплит-система ALMACOM ACH-18QS класса A с официальной гарантией. Поддерживает дополнительные режимы самоочистки и авторестарта. Датчик I-Feel встроен в пульт. Комплектуется медной инсталляцией и кабелем.', 'https://resources.cdn-kaspi.kz/img/m/p/p15/p2a/35272717.jpg?format=gallery-medium', 18),
-('Acron Plus CSH-09DO белый', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 9000 BTU/ч
-Мощность охлаждения: 2600 Вт
-Обслуживаемая площадь: 27 кв.м
-Режим приточной вентиляции: Да
-Режим осушения: Да
-Класс энергоэффективности: A
-Уровень шума: 38 дБ
-Код товара: 137211893
-Цена: Цена по запросу
-<!--/FEATURES-->
-Настенный кондиционер Acron Plus CSH-09DO с поддержкой режимов приточной вентиляции и осушения. Обслуживаемая площадь до 27 кв.м. В комплекте пульт дистанционного управления и таймер включения/выключения.', 'https://resources.cdn-kaspi.kz/img/m/p/pc3/p67/52451386.png?format=gallery-medium', 19),
-('Klima KAC-H12A4/FBR1 белый', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Охлаждающая способность: 12000 BTU/ч
-Мощность охлаждения: 3200 Вт
-Потребляемая мощность при охлаждении: 3520 Вт
-Потребляемая мощность при обогреве: 3665 Вт
-Обслуживаемая площадь: 36 кв.м
-Класс энергоэффективности: A
-Уровень шума: 41 дБ
-Тип хладагента: R 32
-Габариты внутреннего блока: 777х250х201 мм
-Габариты наружного блока: 777х290х498 мм
-Вес внешнего блока: 25 кг
-Код товара: 117088272
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Klima KAC-H12A4/FBR1 белого цвета. В комплекте внутренний и наружный блоки, медная инсталляция, пульт ДУ, дренажный шланг и электрический кабель.', 'https://resources.cdn-kaspi.kz/img/m/p/p66/pd8/135263752.jpg?format=gallery-medium', 20),
+DROP TRIGGER IF EXISTS trg_attributes_updated_at ON public.attributes;
+CREATE TRIGGER trg_attributes_updated_at BEFORE UPDATE ON public.attributes FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ МОНОБЛОКИ ═══
-('Моноблок Acer Aspire 23.8"', 'Моноблоки', '<!--FEATURES-->
-Экран: 23.8" IPS, Full HD (1920 × 1080), матовый
-Процессор: Intel Core i5-13420H (8 ядер, до 4.6 ГГц)
-ОЗУ: 8 ГБ DDR4
-Видеокарта: Intel UHD Graphics (встроенная)
-Общая память: SSD M.2 NVMe 512 ГБ
-ОС: Windows 11 Home
-Габариты: вес ~3.4 кг, толщина корпуса ~18 мм
-Цена: 490 000 тг
-<!--/FEATURES-->
-Надежный моноблок Acer Aspire с процессором 13-го поколения и матовым IPS экраном. Отличный выбор для дома и офиса.', 'https://www.regard.ru/api/site/cacheimg/goods/6417171/358', 30),
-('Моноблок Lenovo ThinkCentre Neo 27"', 'Моноблоки', '<!--FEATURES-->
-Экран: 27" IPS, Full HD (1920 × 1080), матовый, 100 Гц, 300 кд/м²
-Процессор: Intel Core i7-13620H (10 ядер, 2.4–4.9 ГГц)
-ОЗУ: 16 ГБ DDR5, 5200 МГц
-Видеокарта: Intel UHD Graphics (встроенная)
-Общая память: SSD PCIe NVMe 512 ГБ
-Габариты: вес ~7.1 кг, Цвет: серый
-Цена: 525 000 тг
-<!--/FEATURES-->
-Мощный и стильный 27-дюймовый моноблок с высокой частотой обновления экрана 100 Гц и быстрой памятью DDR5.', 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=600&auto=format&fit=crop&q=80', 31),
-('Моноблок Lenovo Yoga 31.5"', 'Моноблоки', '<!--FEATURES-->
-Экран: 31.5" IPS, UHD (3840 × 2160), матовый
-Процессор: Intel Core i9-13900H (14 ядер, до 5.4 ГГц)
-ОЗУ: 32 ГБ DDR5
-Видеокарта: NVIDIA GeForce RTX 4050, 6 ГБ GDDR6
-Общая память: SSD M.2 NVMe 1 ТБ
-ОС: Windows 11 Home
-Габариты: вес ~12 кг, толщина корпуса ~18 мм, Цвет: серый
-Цена: 1 020 000 тг
-<!--/FEATURES-->
-Премиальный моноблок Lenovo Yoga с огромным 31.5-дюймовым UHD экраном, мощным процессором i9 и дискретной графикой.', 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop&q=80', 32),
-('Моноблок HP All-in-One 27"', 'Моноблоки', '<!--FEATURES-->
-Экран: 27" IPS, Full HD (1920 × 1080), матовый
-Процессор: Intel Core Ultra 5 (10 ядер, 1.3–4.8 ГГц)
-ОЗУ: 16 ГБ DDR5
-Видеокарта: Intel UHD Graphics (встроенная)
-Общая память: SSD 512 ГБ
-ОС: Без ОС
-Габариты: вес ~6.7 кг, Цвет: чёрный
-Цена: 500 000 тг
-<!--/FEATURES-->
-Современный моноблок на базе новейшего процессора Intel Core Ultra. Строгий черный дизайн.', 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=600&auto=format&fit=crop&q=80', 33),
-('Моноблок HP EliteOne 23.8"', 'Моноблоки', '<!--FEATURES-->
-Экран: 23.8" IPS, Full HD (1920 × 1080), антибликовый
-Процессор: Intel Core i9-14900 (24 ядра, 2.0–5.5 ГГц)
-ОЗУ: 32 ГБ DDR5
-Видеокарта: Intel Arc Graphics (встроенная)
-Общая память: SSD 1 ТБ
-ОС: Windows
-Габариты: корпус алюминий + пластик, вес ~7 кг, Цвет: чёрный
-Цена: 1 980 000 тг
-<!--/FEATURES-->
-Флагманский моноблок HP EliteOne с 24-ядерным процессором. Идеальное решение для требовательных бизнес-задач.', 'https://hp-rus.com/upload/iblock/35d/p7hyec2xsalkh25wod4rzkjrrrmpkry7/bez-imeni_2_opt.webp', 34),
-('Моноблок Lenovo IdeaCentre 23.8" (Ryzen 5)', 'Моноблоки', '<!--FEATURES-->
-Экран: 23.8" IPS, Full HD (1920 × 1080), матовый
-Процессор: AMD Ryzen 5 7430U (6 ядер, 2.3–4.3 ГГц)
-ОЗУ: 16 ГБ DDR4
-Видеокарта: AMD Radeon Graphics (встроенная)
-Общая память: SSD M.2 NVMe 512 ГБ
-Габариты: вес ~6.8 кг, корпус пластиковый
-Комплектация: клавиатура и мышь в комплекте
-Цена: 500 000 тг
-<!--/FEATURES-->
-Сбалансированный моноблок на базе AMD Ryzen 5 для дома и офиса. Периферия уже в комплекте.', 'https://www.technodom.kz/_next/image?url=https://api.technodom.kz/f3/api/v1/images/800/800/monoblok_238_lenovo_ideacentre_aio_3_24ada6_white_a3050u_8_267322_1.jpg&w=3840&q=85', 35),
-('Моноблок Lenovo IdeaCentre 23.8" (Intel N100)', 'Моноблоки', '<!--FEATURES-->
-Экран: 23.8" IPS, Full HD (1920 × 1080), матовый
-Процессор: Intel N100 (4-ядерный, 3.4 ГГц)
-ОЗУ: 8 ГБ DDR5
-Видеокарта: AMD Radeon Graphics (встроенная)
-Общая память: SSD M.2 NVMe 512 ГБ
-Габариты: вес ~6.8 кг, корпус пластиковый
-Комплектация: клавиатура и мышь в комплекте
-<!--/FEATURES-->
-Доступный моноблок для базовых задач: учебы, работы с документами и серфинга в интернете.', 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&auto=format&fit=crop&q=80', 36),
+DROP TRIGGER IF EXISTS trg_product_attribute_values_updated_at ON public.product_attribute_values;
+CREATE TRIGGER trg_product_attribute_values_updated_at BEFORE UPDATE ON public.product_attribute_values FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ ХОЛОДИЛЬНИКИ ═══
-('Холодильник LG DoorCooling+ GA-B509MESL', 'Холодильники', '<!--FEATURES-->
-Тип: Двухкамерный
-Объем: 384 л (холодильная 277 л, морозильная 107 л)
-Размораживание: Total No Frost
-Инверторный компрессор: Да
-Габариты: 203x59.5x68.2 см
-Цвет: Серебристый
-Цена: 349 990 тг
-<!--/FEATURES-->
-Вместительный холодильник LG с технологией DoorCooling+ для быстрого и равномерного охлаждения продуктов.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/1781681229566-rom62y.webp', 43),
-('Холодильник Samsung RB34T670FSA/WT', 'Холодильники', '<!--FEATURES-->
-Тип: Двухкамерный
-Объем: 340 л
-Размораживание: No Frost
-Инверторный компрессор: Да (SpaceMax)
-Габариты: 185.3x59.5x65.8 см
-Цвет: Серебристый
-Цена: 319 000 тг
-<!--/FEATURES-->
-Холодильник Samsung с увеличенным внутренним объемом за счет тонких стенок SpaceMax.', 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80', 44),
-('Холодильник Beko RCNK311E20VW', 'Холодильники', '<!--FEATURES-->
-Тип: Двухкамерный
-Объем: 276 л
-Размораживание: No Frost (Dual Cooling)
-Габариты: 184x54x60 см
-Цвет: Белый
-Цена: 179 990 тг
-<!--/FEATURES-->
-Компактный холодильник Beko с технологией двухконтурного охлаждения. Отличное решение для небольших кухонь.', 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80', 45),
+DROP TRIGGER IF EXISTS trg_product_images_updated_at ON public.product_images;
+CREATE TRIGGER trg_product_images_updated_at BEFORE UPDATE ON public.product_images FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ═══ ТЕЛЕВИЗОРЫ ═══
-('Телевизор Samsung 50" Crystal UHD 4K', 'Телевизоры', '<!--FEATURES-->
-Модель: UE50CU7100UXCE
-Диагональ: 50" (127 см)
-Разрешение: 4K UHD (3840x2160)
-Smart TV: Tizen
-Звук: 20 Вт
-Цена: 219 000 тг
-<!--/FEATURES-->
-Яркий и четкий 4K телевизор Samsung с процессором Crystal 4K и удобным Smart TV.', 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=600&auto=format&fit=crop&q=80', 46),
-('Телевизор LG 55" UHD 4K', 'Телевизоры', '<!--FEATURES-->
-Модель: 55UR81006LJ
-Диагональ: 55" (140 см)
-Разрешение: 4K UHD (3840x2160)
-Smart TV: webOS
-Пульт: Magic Remote
-Цена: 249 990 тг
-<!--/FEATURES-->
-Большой телевизор LG с поддержкой HDR10 Pro и удобным пультом-указкой Magic Remote.', 'https://images.unsplash.com/photo-1552975084-6e027cd345c2?w=600&auto=format&fit=crop&q=80', 47),
-('Телевизор Xiaomi TV A2 43"', 'Телевизоры', '<!--FEATURES-->
-Диагональ: 43" (109 см)
-Разрешение: 4K UHD (3840x2160)
-Smart TV: Android TV
-Голосовое управление: Да
-Цена: 129 000 тг
-<!--/FEATURES-->
-Доступный 4K телевизор от Xiaomi на базе Android TV с голосовым управлением и безрамочным дизайном.', 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=600&auto=format&fit=crop&q=80', 48),
+-- 5. Policies
 
--- ═══ КОНДИЦИОНЕРЫ ═══
-('ALMACOM ACH-07QR (Regular 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 18-20 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Авторестарт, золотое напыление на теплообменниках, IFEEL, режим сна, самоочистка, без инсталляции
-Цена: Цена по запросу
-<!--/FEATURES-->
-Надежная сплит-система Almacom серии REGULAR 2025. Подходит для небольших помещений.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_8_ACH-09QR.png', 49),
-('ALMACOM ACH-09QR (Regular 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 20-25 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Авторестарт, золотое напыление на теплообменниках, IFEEL, режим сна, самоочистка, без инсталляции
-Цена: Цена по запросу
-<!--/FEATURES-->
-Надежная сплит-система Almacom серии REGULAR 2025 для помещений до 25 квадратных метров.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_8_ACH-09QR.png', 50),
-('ALMACOM ACH-12QR (Regular 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 30-35 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Авторестарт, золотое напыление на теплообменниках, IFEEL, режим сна, самоочистка, без инсталляции
-Цена: Цена по запросу
-<!--/FEATURES-->
-Надежная сплит-система Almacom серии REGULAR 2025. Мощное охлаждение для гостиных или офисов.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_8_ACH-09QR.png', 51),
-('ALMACOM ACH-18QRA (Regular 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 50-55 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Авторестарт, золотое напыление на теплообменниках, IFEEL, режим сна, самоочистка, без инсталляции
-Цена: Цена по запросу
-<!--/FEATURES-->
-Мощная сплит-система Almacom серии REGULAR 2025 для больших залов до 55 квадратных метров.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_8_ACH-09QR.png', 52),
-('ALMACOM ACH-24QR (Regular 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 65-70 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Авторестарт, золотое напыление на теплообменниках, IFEEL, режим сна, самоочистка, без инсталляции
-Цена: Цена по запросу
-<!--/FEATURES-->
-Мощная сплит-система Almacom серии REGULAR 2025 для больших залов до 70 квадратных метров.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_8_ACH-09QR.png', 53),
-('ALMACOM ACH-07QR Wi-Fi (Regular 2026)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 18-20 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Wi-Fi, авторестарт, золотое напыление, IFEEL, режим сна, самоочистка
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Almacom REGULAR 2026 с поддержкой Wi-Fi управления с телефона.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_13_ACH-07QR_Wi-Fi_option.png', 54),
-('ALMACOM ACH-09QR Wi-Fi (Regular 2026)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 20-25 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Wi-Fi, авторестарт, золотое напыление, IFEEL, режим сна, самоочистка
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Almacom REGULAR 2026 с поддержкой Wi-Fi управления с телефона.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_14_ACH-09QR_Wi-Fi_option.png', 55),
-('ALMACOM ACH-12QR Wi-Fi (Regular 2026)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 30-35 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: Wi-Fi, авторестарт, золотое напыление, IFEEL, режим сна, самоочистка
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Almacom REGULAR 2026 с поддержкой Wi-Fi управления с телефона.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_14_ACH-09QR_Wi-Fi_option.png', 56),
-('ALMACOM ACH-07QS (Standard 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 18-20 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: 3 метра медных труб (инсталляция) в комплекте
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Almacom серии STANDARD 2025 с инсталляцией в комплекте.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_17_ACH-07QS.png', 57),
-('ALMACOM ACH-12QS (Standard 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 30-35 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: 3 метра медных труб (инсталляция) в комплекте
-Цена: Цена по запросу
-<!--/FEATURES-->
-Сплит-система Almacom серии STANDARD 2025 с инсталляцией в комплекте. Идеально для комнат 30 м2.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_17_ACH-07QS.png', 58),
-('ALMACOM ACH-18QSA (Standard 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 50-55 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: 3 метра медных труб (инсталляция) в комплекте
-Цена: Цена по запросу
-<!--/FEATURES-->
-Мощная сплит-система Almacom серии STANDARD 2025 с инсталляцией в комплекте. Идеально для больших помещений 50 м2.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_17_ACH-07QS.png', 59),
-('ALMACOM ACH-24QS (Standard 2025)', 'Кондиционеры', '<!--FEATURES-->
-Тип: Сплит-система
-Способ установки: Настенный
-Обслуживаемая площадь: 65-70 м2
-Класс энергоэффективности: A
-Фреон: R410A
-Гарантия: 36 месяцев
-Особенности: 3 метра медных труб (инсталляция) в комплекте
-Цена: Цена по запросу
-<!--/FEATURES-->
-Мощная сплит-система Almacom серии STANDARD 2025 с инсталляцией в комплекте. Идеально для коммерческих помещений 70 м2.', 'https://zeajipsclthtdmqdpahz.supabase.co/storage/v1/object/public/product-images/row_17_ACH-07QS.png', 60),
+DROP POLICY IF EXISTS "Public read access for products" ON public.products;
+DROP POLICY IF EXISTS "Public read published products" ON public.products;
+DROP POLICY IF EXISTS "Admins read products" ON public.products;
+DROP POLICY IF EXISTS "Admins insert products" ON public.products;
+DROP POLICY IF EXISTS "Admins update products" ON public.products;
+DROP POLICY IF EXISTS "Admins delete products" ON public.products;
 
--- ═══ ИНТЕРАКТИВНЫЕ ПАНЕЛИ ═══
-('Интерактивная панель Horion 65" 4K', 'Интерактивные панели', '<!--FEATURES-->
-Диагональ: 65" (165 см)
-Разрешение: 4K UHD (3840×2160)
-Мультитач: 20 точек касания
-ОС: Android / Windows OPS (опция)
-Встроенный Wi-Fi, стилус в комплекте
-<!--/FEATURES-->
-Интерактивная панель Horion 65 дюймов для учебных классов, аудиторий и конференц-залов.', 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80', 61),
-('Интерактивная панель Newline 75" 4K Smartboard', 'Интерактивные панели', '<!--FEATURES-->
-Диагональ: 75" (190 см)
-Разрешение: 4K UHD (3840×2160)
-Мультитач: 40 точек касания
-Акустика: 2x20 Вт
-Гарантия: 36 месяцев
-<!--/FEATURES-->
-Профессиональная интерактивная панель Newline 75 дюймов с антибликовым покрытием и поддержкой стилусов.', 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80', 62),
-('Интерактивный комплект Hikvision 86"', 'Интерактивные панели', '<!--FEATURES-->
-Диагональ: 86" (218 см)
-Разрешение: 4K UHD (3840×2160)
-Камера 4K и микрофонный массив в комплекте
-ОС: Android 11 / OPS Windows 11
-<!--/FEATURES-->
-Флагманская интерактивная панель Hikvision 86 дюймов для переговорных комнат и онлайн-конференций.', 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80', 63),
+CREATE POLICY "Admins read products" ON public.products FOR SELECT TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins insert products" ON public.products FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "Admins update products" ON public.products FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins delete products" ON public.products FOR DELETE TO authenticated USING (public.is_admin());
 
--- ═══ МЕБЕЛЬ ═══
-('Офисное кресло эргономичное Nurset Ergonomic', 'Мебель', '<!--FEATURES-->
-Материал: дышащая сетка + экокожа
-Регулировки: высота, подголовник, подлокотники, поясничный упор
-Максимальная нагрузка: до 130 кг
-<!--/FEATURES-->
-Эргономичное офисное кресло с высокой спинкой и анатомической поддержкой поясницы.', 'https://images.unsplash.com/photo-1580481072645-022f9a6d1270?w=600&auto=format&fit=crop&q=80', 64),
-('Стол руководителя Nurset Executive', 'Мебель', '<!--FEATURES-->
-Размеры: 1800×800×750 мм
-Материал: ЛДСП 32 мм / металлокаркас
-Цвет: Темный орех / Черный металл
-<!--/FEATURES-->
-Современный и солидный рабочий стол для кабинета руководителя или менеджера.', 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600&auto=format&fit=crop&q=80', 65),
-('Шкаф архивный металлический для документов', 'Мебель', '<!--FEATURES-->
-Размеры: 1850×920×450 мм
-Замок: ключевой с ригельной системой
-Количество полок: 4 регулируемые полки
-<!--/FEATURES-->
-Надежный металлический шкаф для хранения документов и офисных бумаг.', 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=600&auto=format&fit=crop&q=80', 66);
+DROP POLICY IF EXISTS "Public read product images" ON public.product_images;
+DROP POLICY IF EXISTS "Admins read product images" ON public.product_images;
+CREATE POLICY "Admins read product images" ON public.product_images FOR SELECT TO authenticated USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Public read product attribute values" ON public.product_attribute_values;
+DROP POLICY IF EXISTS "Admins read product attribute values" ON public.product_attribute_values;
+CREATE POLICY "Admins read product attribute values" ON public.product_attribute_values FOR SELECT TO authenticated USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Public insert orders" ON public.orders;
+DROP POLICY IF EXISTS "Admins read orders" ON public.orders;
+DROP POLICY IF EXISTS "Admins update orders" ON public.orders;
+DROP POLICY IF EXISTS "Admins delete orders" ON public.orders;
+
+REVOKE INSERT ON public.orders FROM PUBLIC, anon, authenticated;
+CREATE POLICY "Admins read orders" ON public.orders FOR SELECT TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins update orders" ON public.orders FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins delete orders" ON public.orders FOR DELETE TO authenticated USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins manage quote requests" ON public.quote_requests;
+CREATE POLICY "Admins manage quote requests" ON public.quote_requests FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins manage quote request items" ON public.quote_request_items;
+CREATE POLICY "Admins manage quote request items" ON public.quote_request_items FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins manage storage cleanup queue" ON public.storage_cleanup_queue;
+CREATE POLICY "Admins manage storage cleanup queue" ON public.storage_cleanup_queue FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- 6. Views
+
+CREATE OR REPLACE VIEW public.public_products AS
+SELECT
+  p.id,
+  p.slug,
+  p.sku,
+  p.category_id,
+  p.brand_id,
+  CASE WHEN p.publish_ru THEN p.name_ru ELSE NULL END AS name_ru,
+  CASE WHEN (p.publish_kk AND p.translation_status_kk = 'verified') THEN p.name_kk ELSE NULL END AS name_kk,
+  CASE WHEN p.publish_ru THEN p.short_description_ru ELSE NULL END AS short_description_ru,
+  CASE WHEN (p.publish_kk AND p.translation_status_kk = 'verified') THEN p.short_description_kk ELSE NULL END AS short_description_kk,
+  CASE WHEN p.publish_ru THEN p.description_ru ELSE NULL END AS description_ru,
+  CASE WHEN (p.publish_kk AND p.translation_status_kk = 'verified') THEN p.description_kk ELSE NULL END AS description_kk,
+  CASE WHEN p.publish_ru THEN p.warranty_ru ELSE NULL END AS warranty_ru,
+  CASE WHEN (p.publish_kk AND p.translation_status_kk = 'verified') THEN p.warranty_kk ELSE NULL END AS warranty_kk,
+  p.price_mode,
+  CASE WHEN p.price_mode IN ('exact', 'from') THEN p.price_amount ELSE NULL END AS price_amount,
+  CASE WHEN p.price_mode IN ('exact', 'from') THEN p.old_price_amount ELSE NULL END AS old_price_amount,
+  p.currency,
+  p.stock_status,
+  p.image_url,
+  p.is_featured,
+  p.sort_order,
+  p.created_at
+FROM public.products p
+JOIN public.categories c ON c.id = p.category_id
+WHERE p.publication_status = 'published'
+  AND c.status = 'published'
+  AND (p.publish_ru OR (p.publish_kk AND p.translation_status_kk = 'verified'));
+
+REVOKE ALL ON public.public_products FROM PUBLIC;
+GRANT SELECT ON public.public_products TO anon, authenticated;
+
+-- 7. Application RPCs
+
+CREATE OR REPLACE FUNCTION public.get_published_product_slug(
+  p_locale TEXT,
+  p_id UUID
+)
+RETURNS TABLE (id UUID, slug TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.id, p.slug
+  FROM public.products p
+  JOIN public.categories c ON c.id = p.category_id
+  WHERE p.id = p_id
+    AND p.publication_status = 'published'
+    AND c.status = 'published'
+    AND p.currency = 'KZT'
+    AND p.slug IS NOT NULL
+    AND (
+      (p_locale = 'ru' AND p.publish_ru AND p.name_ru IS NOT NULL AND p.name_ru <> '')
+      OR
+      (p_locale = 'kk' AND p.publish_kk AND p.translation_status_kk = 'verified' AND p.name_kk IS NOT NULL AND p.name_kk <> '')
+    )
+  LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_published_product_slug(TEXT, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_published_product_slug(TEXT, UUID) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_published_product_detail(
+  p_locale TEXT,
+  p_slug TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_result JSONB;
+BEGIN
+  IF p_locale NOT IN ('ru', 'kk') THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT json_build_object(
+    'id', p.id,
+    'slug', p.slug,
+    'sku', p.sku,
+    'category_id', p.category_id,
+    'brand_id', p.brand_id,
+    'name_ru', CASE WHEN p_locale = 'ru' THEN p.name_ru ELSE NULL END,
+    'name_kk', CASE WHEN p_locale = 'kk' THEN p.name_kk ELSE NULL END,
+    'short_description_ru', CASE WHEN p_locale = 'ru' THEN p.short_description_ru ELSE NULL END,
+    'short_description_kk', CASE WHEN p_locale = 'kk' THEN p.short_description_kk ELSE NULL END,
+    'description_ru', CASE WHEN p_locale = 'ru' THEN p.description_ru ELSE NULL END,
+    'description_kk', CASE WHEN p_locale = 'kk' THEN p.description_kk ELSE NULL END,
+    'warranty_ru', CASE WHEN p_locale = 'ru' THEN p.warranty_ru ELSE NULL END,
+    'warranty_kk', CASE WHEN p_locale = 'kk' THEN p.warranty_kk ELSE NULL END,
+    'price_mode', p.price_mode,
+    'price_amount', CASE WHEN p.price_mode IN ('exact', 'from') THEN p.price_amount ELSE NULL END,
+    'old_price_amount', CASE WHEN p.price_mode IN ('exact', 'from') THEN p.old_price_amount ELSE NULL END,
+    'currency', p.currency,
+    'stock_status', p.stock_status,
+    'image_url', p.image_url,
+    'is_featured', p.is_featured,
+    'sort_order', p.sort_order,
+    'created_at', p.created_at,
+    'category', json_build_object(
+      'id', c.id,
+      'slug', c.slug,
+      'name_ru', CASE WHEN p_locale = 'ru' THEN c.name_ru ELSE NULL END,
+      'name_kk', CASE WHEN p_locale = 'kk' THEN c.name_kk ELSE NULL END
+    ),
+    'brand', CASE WHEN b.id IS NOT NULL THEN json_build_object(
+      'id', b.id,
+      'slug', b.slug,
+      'name', b.name,
+      'logo_url', b.logo_url
+    ) ELSE NULL END,
+    'product_images', (
+      SELECT COALESCE(json_agg(
+        json_build_object(
+          'id', pi.id,
+          'source_url', pi.source_url,
+          'storage_path', pi.storage_path,
+          'alt_ru', CASE WHEN p_locale = 'ru' THEN pi.alt_ru ELSE NULL END,
+          'alt_kk', CASE WHEN p_locale = 'kk' THEN pi.alt_kk ELSE NULL END,
+          'sort_order', pi.sort_order,
+          'is_primary', pi.is_primary
+        ) ORDER BY pi.sort_order ASC, pi.created_at ASC
+      ), '[]'::json)
+      FROM public.product_images pi
+      WHERE pi.product_id = p.id
+    ),
+    'product_attribute_values', (
+      SELECT COALESCE(json_agg(
+        json_build_object(
+          'id', pav.id,
+          'value_text_ru', CASE WHEN p_locale = 'ru' THEN pav.value_text_ru ELSE NULL END,
+          'value_text_kk', CASE WHEN p_locale = 'kk' THEN pav.value_text_kk ELSE NULL END,
+          'value_number', pav.value_number,
+          'value_boolean', pav.value_boolean,
+          'value_option', pav.value_option,
+          'attribute', json_build_object(
+            'id', a.id,
+            'code', a.code,
+            'name_ru', CASE WHEN p_locale = 'ru' THEN a.name_ru ELSE NULL END,
+            'name_kk', CASE WHEN p_locale = 'kk' THEN a.name_kk ELSE NULL END,
+            'unit_ru', CASE WHEN p_locale = 'ru' THEN a.unit_ru ELSE NULL END,
+            'unit_kk', CASE WHEN p_locale = 'kk' THEN a.unit_kk ELSE NULL END,
+            'sort_order', a.sort_order
+          )
+        ) ORDER BY a.sort_order ASC
+      ), '[]'::json)
+      FROM public.product_attribute_values pav
+      JOIN public.attributes a ON a.id = pav.attribute_id
+      WHERE pav.product_id = p.id AND a.status = 'published'
+    )
+  ) INTO v_result
+  FROM public.products p
+  JOIN public.categories c ON c.id = p.category_id
+  LEFT JOIN public.brands b ON b.id = p.brand_id AND b.status = 'published'
+  WHERE p.slug = p_slug
+    AND p.publication_status = 'published'
+    AND c.status = 'published'
+    AND p.currency = 'KZT'
+    AND (
+      (p_locale = 'ru' AND p.publish_ru = true AND p.name_ru IS NOT NULL AND p.name_ru <> '')
+      OR
+      (p_locale = 'kk' AND p.publish_kk = true AND p.translation_status_kk = 'verified' AND p.name_kk IS NOT NULL AND p.name_kk <> '')
+    )
+  LIMIT 1;
+
+  RETURN v_result;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.get_published_product_detail(TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_published_product_detail(TEXT, TEXT) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_published_product_ids_by_attributes(
+  p_locale TEXT,
+  p_filters JSONB
+)
+RETURNS TABLE (product_id UUID)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_code TEXT;
+  v_raw_value TEXT;
+  v_attribute RECORD;
+  v_matches UUID[] := NULL;
+  v_current UUID[];
+BEGIN
+  IF p_locale NOT IN ('ru', 'kk') THEN
+    RAISE EXCEPTION 'locale must be ru or kk' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_filters IS NULL OR jsonb_typeof(p_filters) <> 'object' THEN
+    RAISE EXCEPTION 'filters must be a JSON object' USING ERRCODE = '22023';
+  END IF;
+
+  IF jsonb_object_length(p_filters) = 0 THEN
+    RETURN;
+  END IF;
+
+  IF jsonb_object_length(p_filters) > 20 THEN
+    RAISE EXCEPTION 'too many attribute filters' USING ERRCODE = '22023';
+  END IF;
+
+  FOR v_code, v_raw_value IN
+    SELECT key, value
+    FROM jsonb_each_text(p_filters)
+    ORDER BY key
+  LOOP
+    IF v_raw_value IS NULL OR btrim(v_raw_value) = '' OR length(v_raw_value) > 120 THEN
+      RAISE EXCEPTION 'invalid value for attribute %', v_code USING ERRCODE = '22023';
+    END IF;
+
+    SELECT a.id, a.data_type
+    INTO v_attribute
+    FROM public.attributes a
+    WHERE a.code = v_code
+      AND a.status = 'published'
+      AND a.is_filterable = true;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'attribute % is not a published filter', v_code USING ERRCODE = '22023';
+    END IF;
+
+    IF v_attribute.data_type = 'boolean' AND v_raw_value NOT IN ('true', 'false') THEN
+      RAISE EXCEPTION 'attribute % must be true or false', v_code USING ERRCODE = '22023';
+    END IF;
+
+    IF v_attribute.data_type = 'number' AND v_raw_value !~ '^\d+(\.\d{1,4})?$' THEN
+      RAISE EXCEPTION 'attribute % must be a non-negative number', v_code USING ERRCODE = '22023';
+    END IF;
+
+    SELECT COALESCE(array_agg(matches.product_id), ARRAY[]::UUID[])
+    INTO v_current
+    FROM (
+      SELECT pav.product_id
+      FROM public.product_attribute_values pav
+      JOIN public.products p ON p.id = pav.product_id
+      JOIN public.categories c ON c.id = p.category_id
+      WHERE pav.attribute_id = v_attribute.id
+        AND p.publication_status = 'published'
+        AND c.status = 'published'
+        AND p.currency = 'KZT'
+        AND (
+          (p_locale = 'ru' AND p.publish_ru = true AND NULLIF(p.name_ru, '') IS NOT NULL)
+          OR
+          (p_locale = 'kk' AND p.publish_kk = true AND p.translation_status_kk = 'verified' AND NULLIF(p.name_kk, '') IS NOT NULL)
+        )
+        AND CASE v_attribute.data_type
+          WHEN 'boolean' THEN pav.value_boolean = (v_raw_value = 'true')
+          WHEN 'number' THEN pav.value_number = v_raw_value::NUMERIC
+          WHEN 'option' THEN pav.value_option = v_raw_value
+          WHEN 'text' THEN CASE
+            WHEN p_locale = 'kk' THEN pav.value_text_kk = v_raw_value
+            ELSE pav.value_text_ru = v_raw_value
+          END
+          ELSE false
+        END
+      ORDER BY pav.product_id
+      LIMIT 5001
+    ) AS matches;
+
+    IF cardinality(v_current) > 5000 THEN
+      RAISE EXCEPTION 'catalog attribute filter is too broad' USING ERRCODE = '54000';
+    END IF;
+
+    IF v_matches IS NULL THEN
+      v_matches := v_current;
+    ELSE
+      SELECT COALESCE(array_agg(candidate), ARRAY[]::UUID[])
+      INTO v_matches
+      FROM unnest(v_matches) AS candidate
+      WHERE candidate = ANY(v_current);
+    END IF;
+
+    EXIT WHEN cardinality(v_matches) = 0;
+  END LOOP;
+
+  RETURN QUERY
+  SELECT candidate
+  FROM unnest(COALESCE(v_matches, ARRAY[]::UUID[])) AS candidate
+  ORDER BY candidate;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.get_published_product_ids_by_attributes(TEXT, JSONB) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_published_product_ids_by_attributes(TEXT, JSONB) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.save_cms_product_attributes(
+  p_product_id UUID,
+  p_product_data JSONB,
+  p_attributes JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_attr JSONB;
+  v_db_attr RECORD;
+  v_opt TEXT;
+  v_allowed BOOLEAN;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = p_product_id FOR UPDATE) THEN
+    RAISE EXCEPTION 'product not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.products
+  SET
+    name = COALESCE(p_product_data->>'name', name),
+    category = COALESCE(p_product_data->>'category', category),
+    description = p_product_data->>'description',
+    sort_order = COALESCE((p_product_data->>'sort_order')::INTEGER, sort_order),
+    sku = NULLIF(p_product_data->>'sku', ''),
+    external_id = NULLIF(p_product_data->>'external_id', ''),
+    slug = NULLIF(p_product_data->>'slug', ''),
+    category_id = (p_product_data->>'category_id')::UUID,
+    brand_id = (p_product_data->>'brand_id')::UUID,
+    name_ru = p_product_data->>'name_ru',
+    name_kk = NULLIF(p_product_data->>'name_kk', ''),
+    short_description_ru = NULLIF(p_product_data->>'short_description_ru', ''),
+    short_description_kk = NULLIF(p_product_data->>'short_description_kk', ''),
+    description_ru = NULLIF(p_product_data->>'description_ru', ''),
+    description_kk = NULLIF(p_product_data->>'description_kk', ''),
+    warranty_ru = NULLIF(p_product_data->>'warranty_ru', ''),
+    warranty_kk = NULLIF(p_product_data->>'warranty_kk', ''),
+    price_mode = p_product_data->>'price_mode',
+    price_amount = NULLIF(p_product_data->>'price_amount', '')::NUMERIC,
+    old_price_amount = NULLIF(p_product_data->>'old_price_amount', '')::NUMERIC,
+    currency = COALESCE(p_product_data->>'currency', 'KZT'),
+    stock_status = p_product_data->>'stock_status',
+    publication_status = p_product_data->>'publication_status',
+    publish_ru = COALESCE((p_product_data->>'publish_ru')::BOOLEAN, false),
+    publish_kk = COALESCE((p_product_data->>'publish_kk')::BOOLEAN, false),
+    translation_status_kk = p_product_data->>'translation_status_kk',
+    is_featured = COALESCE((p_product_data->>'is_featured')::BOOLEAN, false),
+    seo_title_ru = NULLIF(p_product_data->>'seo_title_ru', ''),
+    seo_title_kk = NULLIF(p_product_data->>'seo_title_kk', ''),
+    seo_description_ru = NULLIF(p_product_data->>'seo_description_ru', ''),
+    seo_description_kk = NULLIF(p_product_data->>'seo_description_kk', ''),
+    updated_at = now()
+  WHERE id = p_product_id;
+
+  IF p_attributes IS NOT NULL THEN
+    DELETE FROM public.product_attribute_values
+    WHERE product_id = p_product_id;
+
+    IF jsonb_array_length(p_attributes) > 0 THEN
+      FOR v_attr IN SELECT * FROM jsonb_array_elements(p_attributes)
+      LOOP
+        SELECT id, data_type, options, status INTO v_db_attr FROM public.attributes WHERE id = (v_attr->>'attribute_id')::UUID;
+        IF v_db_attr IS NULL THEN
+          RAISE EXCEPTION 'attribute % not found', v_attr->>'attribute_id' USING ERRCODE = '23503';
+        END IF;
+
+        IF v_db_attr.status != 'published' THEN
+          RAISE EXCEPTION 'attribute % is not published', v_attr->>'attribute_id' USING ERRCODE = '23503';
+        END IF;
+
+        IF v_db_attr.data_type = 'boolean' AND v_attr->>'value_boolean' IS NOT NULL AND jsonb_typeof(v_attr->'value_boolean') != 'boolean' THEN
+          RAISE EXCEPTION 'attribute % boolean value must be boolean', v_attr->>'attribute_id' USING ERRCODE = '22023';
+        ELSIF v_db_attr.data_type = 'option' AND NULLIF(v_attr->>'value_option', '') IS NOT NULL THEN
+          IF v_db_attr.options IS NULL OR jsonb_array_length(v_db_attr.options) = 0 THEN
+             RAISE EXCEPTION 'attribute % option requires options configuration', v_attr->>'attribute_id' USING ERRCODE = '22023';
+          END IF;
+          v_allowed := false;
+          FOR v_opt IN SELECT jsonb_array_elements_text(v_db_attr.options)
+          LOOP
+            IF v_opt = v_attr->>'value_option' THEN
+               v_allowed := true;
+               EXIT;
+            END IF;
+          END LOOP;
+          IF NOT v_allowed THEN
+             RAISE EXCEPTION 'attribute % value_option is not in allowed options', v_attr->>'attribute_id' USING ERRCODE = '22023';
+          END IF;
+        END IF;
+
+        INSERT INTO public.product_attribute_values (
+          product_id,
+          attribute_id,
+          value_text_ru,
+          value_text_kk,
+          value_number,
+          value_boolean,
+          value_option,
+          raw_value
+        ) VALUES (
+          p_product_id,
+          (v_attr->>'attribute_id')::UUID,
+          CASE WHEN v_db_attr.data_type = 'text' THEN NULLIF(v_attr->>'value_text_ru', '') ELSE NULL END,
+          CASE WHEN v_db_attr.data_type = 'text' THEN NULLIF(v_attr->>'value_text_kk', '') ELSE NULL END,
+          CASE WHEN v_db_attr.data_type = 'number' THEN NULLIF(v_attr->>'value_number', '')::NUMERIC ELSE NULL END,
+          CASE WHEN v_db_attr.data_type = 'boolean' THEN (v_attr->>'value_boolean')::BOOLEAN ELSE NULL END,
+          CASE WHEN v_db_attr.data_type = 'option' THEN NULLIF(v_attr->>'value_option', '') ELSE NULL END,
+          NULLIF(v_attr->>'raw_value', '')
+        );
+      END LOOP;
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object('success', true, 'id', p_product_id);
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.save_cms_product_attributes(UUID, JSONB, JSONB) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.save_cms_product_attributes(UUID, JSONB, JSONB) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.enqueue_storage_cleanup(p_bucket TEXT, p_storage_path TEXT)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_job_id UUID;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_bucket IS DISTINCT FROM 'product-images'
+    OR p_storage_path IS NULL
+    OR btrim(p_storage_path) = ''
+    OR length(p_storage_path) > 1024
+    OR p_storage_path LIKE '/%'
+    OR p_storage_path LIKE '%..%'
+    OR strpos(p_storage_path, E'\\') > 0 THEN
+    RAISE EXCEPTION 'invalid storage cleanup target' USING ERRCODE = '22023';
+  END IF;
+
+  INSERT INTO public.storage_cleanup_queue (bucket, storage_path)
+  VALUES ('product-images', p_storage_path)
+  ON CONFLICT (bucket, storage_path) WHERE status IN ('pending', 'processing')
+  DO UPDATE SET updated_at = now()
+  RETURNING id INTO v_job_id;
+
+  RETURN v_job_id;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.enqueue_storage_cleanup(TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.enqueue_storage_cleanup(TEXT, TEXT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.claim_storage_cleanup_jobs(
+  p_limit INTEGER DEFAULT 50,
+  p_lease_seconds INTEGER DEFAULT 300
+)
+RETURNS TABLE (
+  id UUID,
+  bucket TEXT,
+  storage_path TEXT,
+  attempts INTEGER,
+  lease_token UUID
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_lease_token UUID := gen_random_uuid();
+  v_limit INTEGER := LEAST(GREATEST(COALESCE(p_limit, 50), 1), 100);
+  v_lease_seconds INTEGER := LEAST(GREATEST(COALESCE(p_lease_seconds, 300), 30), 1800);
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+  WITH candidates AS (
+    SELECT queue.id
+    FROM public.storage_cleanup_queue AS queue
+    WHERE queue.attempts < 5
+      AND (
+        (queue.status IN ('pending', 'failed') AND queue.next_attempt_at <= now())
+        OR
+        (queue.status = 'processing' AND queue.lease_expires_at <= now())
+      )
+    ORDER BY queue.created_at ASC, queue.id ASC
+    FOR UPDATE SKIP LOCKED
+    LIMIT v_limit
+  ), claimed AS (
+    UPDATE public.storage_cleanup_queue AS queue
+    SET
+      status = 'processing',
+      lease_token = v_lease_token,
+      lease_expires_at = now() + make_interval(secs => v_lease_seconds),
+      updated_at = now()
+    FROM candidates
+    WHERE queue.id = candidates.id
+    RETURNING queue.id, queue.bucket, queue.storage_path, queue.attempts, queue.lease_token
+  )
+  SELECT claimed.id, claimed.bucket, claimed.storage_path, claimed.attempts, claimed.lease_token
+  FROM claimed
+  ORDER BY claimed.id;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.claim_storage_cleanup_jobs(INTEGER, INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.claim_storage_cleanup_jobs(INTEGER, INTEGER) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.ensure_product_primary_image_invariant(p_product_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_primary_count INT;
+  v_next_primary_id UUID;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_product_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO v_primary_count
+  FROM public.product_images
+  WHERE product_id = p_product_id AND is_primary = true;
+
+  IF v_primary_count = 0 THEN
+    SELECT id INTO v_next_primary_id
+    FROM public.product_images
+    WHERE product_id = p_product_id
+    ORDER BY sort_order ASC, created_at ASC, id ASC
+    LIMIT 1;
+
+    IF v_next_primary_id IS NOT NULL THEN
+      UPDATE public.product_images
+      SET is_primary = true, updated_at = now()
+      WHERE id = v_next_primary_id;
+    END IF;
+  ELSIF v_primary_count > 1 THEN
+    SELECT id INTO v_next_primary_id
+    FROM public.product_images
+    WHERE product_id = p_product_id AND is_primary = true
+    ORDER BY sort_order ASC, created_at ASC, id ASC
+    LIMIT 1;
+
+    UPDATE public.product_images
+    SET is_primary = (id = v_next_primary_id), updated_at = now()
+    WHERE product_id = p_product_id;
+  END IF;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.ensure_product_primary_image_invariant(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.ensure_product_primary_image_invariant(UUID) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.set_primary_product_image(
+  p_product_id UUID,
+  p_image_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'product not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.product_images WHERE id = p_image_id AND product_id = p_product_id) THEN
+    RAISE EXCEPTION 'image not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.product_images
+  SET is_primary = false, updated_at = now()
+  WHERE product_id = p_product_id AND is_primary = true AND id <> p_image_id;
+
+  UPDATE public.product_images
+  SET is_primary = true, updated_at = now()
+  WHERE id = p_image_id AND product_id = p_product_id;
+
+  RETURN jsonb_build_object('success', true, 'product_id', p_product_id, 'primary_image_id', p_image_id);
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.set_primary_product_image(UUID, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.set_primary_product_image(UUID, UUID) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.reorder_product_images(
+  p_product_id UUID,
+  p_image_ids UUID[]
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_id UUID;
+  v_idx INT := 0;
+  v_db_count INT;
+  v_param_count INT;
+  v_distinct_count INT;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+
+  IF p_image_ids IS NULL THEN
+    RAISE EXCEPTION 'image_ids cannot be null' USING ERRCODE = '22023';
+  END IF;
+
+  SELECT count(*) INTO v_db_count
+  FROM public.product_images
+  WHERE product_id = p_product_id;
+
+  v_param_count := array_length(p_image_ids, 1);
+  IF v_param_count IS NULL THEN v_param_count := 0; END IF;
+
+  SELECT count(DISTINCT unnest) INTO v_distinct_count
+  FROM unnest(p_image_ids);
+
+  IF v_param_count <> v_db_count OR v_distinct_count <> v_db_count THEN
+    RAISE EXCEPTION 'image_ids must contain a unique complete list of gallery IDs for the product' USING ERRCODE = '22023';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM unnest(p_image_ids) AS item_id
+    WHERE NOT EXISTS (
+      SELECT 1 FROM public.product_images
+      WHERE id = item_id AND product_id = p_product_id
+    )
+  ) THEN
+    RAISE EXCEPTION 'image_ids contains IDs from another product or non-existent IDs' USING ERRCODE = '22023';
+  END IF;
+
+  FOREACH v_id IN ARRAY p_image_ids
+  LOOP
+    UPDATE public.product_images
+    SET sort_order = v_idx, updated_at = now()
+    WHERE id = v_id AND product_id = p_product_id;
+    v_idx := v_idx + 1;
+  END LOOP;
+
+  PERFORM public.ensure_product_primary_image_invariant(p_product_id);
+
+  RETURN jsonb_build_object('success', true, 'product_id', p_product_id, 'count', v_idx);
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.reorder_product_images(UUID, UUID[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.reorder_product_images(UUID, UUID[]) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.create_product_image(
+  p_product_id UUID,
+  p_image_data JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_id UUID;
+  v_is_primary BOOLEAN;
+  v_db_count INT;
+  v_req_primary BOOLEAN;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+
+  SELECT count(*) INTO v_db_count FROM public.product_images WHERE product_id = p_product_id;
+
+  v_req_primary := COALESCE((p_image_data->>'is_primary')::BOOLEAN, false);
+  v_is_primary := (v_db_count = 0) OR v_req_primary;
+
+  IF v_is_primary AND v_db_count > 0 THEN
+    UPDATE public.product_images
+    SET is_primary = false, updated_at = now()
+    WHERE product_id = p_product_id AND is_primary = true;
+  END IF;
+
+  INSERT INTO public.product_images (
+    product_id,
+    storage_path,
+    source_url,
+    alt_ru,
+    alt_kk,
+    sort_order,
+    is_primary
+  ) VALUES (
+    p_product_id,
+    p_image_data->>'storage_path',
+    p_image_data->>'source_url',
+    p_image_data->>'alt_ru',
+    p_image_data->>'alt_kk',
+    COALESCE((p_image_data->>'sort_order')::INT, 0),
+    v_is_primary
+  )
+  RETURNING id INTO v_id;
+
+  PERFORM public.ensure_product_primary_image_invariant(p_product_id);
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'id', v_id,
+    'product_id', p_product_id,
+    'storage_path', p_image_data->>'storage_path',
+    'source_url', p_image_data->>'source_url',
+    'alt_ru', p_image_data->>'alt_ru',
+    'alt_kk', p_image_data->>'alt_kk',
+    'sort_order', COALESCE((p_image_data->>'sort_order')::INT, 0),
+    'is_primary', v_is_primary
+  );
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.create_product_image(UUID, JSONB) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_product_image(UUID, JSONB) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.delete_product_image(
+  p_product_id UUID,
+  p_image_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_storage_path TEXT;
+  v_source_url TEXT;
+  v_job_id UUID := NULL;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+
+  SELECT storage_path, source_url INTO v_storage_path, v_source_url
+  FROM public.product_images
+  WHERE id = p_image_id AND product_id = p_product_id;
+
+  IF v_storage_path IS NULL AND v_source_url IS NULL THEN
+    RAISE EXCEPTION 'image not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_storage_path IS NOT NULL AND v_storage_path <> '' THEN
+    INSERT INTO public.storage_cleanup_queue (bucket, storage_path)
+    VALUES ('product-images', v_storage_path)
+    ON CONFLICT (bucket, storage_path) WHERE status IN ('pending', 'processing')
+    DO UPDATE SET updated_at = now()
+    RETURNING id INTO v_job_id;
+  END IF;
+
+  DELETE FROM public.product_images WHERE id = p_image_id AND product_id = p_product_id;
+
+  PERFORM public.ensure_product_primary_image_invariant(p_product_id);
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'id', p_image_id,
+    'product_id', p_product_id,
+    'storage_path', v_storage_path,
+    'source_url', v_source_url,
+    'cleanup_job_id', v_job_id
+  );
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.delete_product_image(UUID, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.delete_product_image(UUID, UUID) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.apply_import_batch(p_batch_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+DECLARE
+  v_batch public.import_batches%ROWTYPE;
+  v_row public.import_rows%ROWTYPE;
+  v_payload JSONB;
+  v_category_id UUID;
+  v_brand_id UUID;
+  v_category_name TEXT;
+  v_product_id UUID;
+  v_created INTEGER := 0;
+  v_updated INTEGER := 0;
+  v_skipped INTEGER := 0;
+  v_result JSONB;
+  v_error TEXT;
+BEGIN
+  IF NOT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  BEGIN
+    SELECT * INTO v_batch
+    FROM public.import_batches
+    WHERE id = p_batch_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'import batch not found' USING ERRCODE = 'P0002';
+    END IF;
+
+    IF v_batch.status = 'completed' THEN
+      RETURN COALESCE(v_batch.summary, '{}'::jsonb) || jsonb_build_object('status', 'completed', 'idempotent', true);
+    END IF;
+
+    IF v_batch.status NOT IN ('approved', 'failed') THEN
+      RAISE EXCEPTION 'import batch is not approved for apply' USING ERRCODE = 'P0001';
+    END IF;
+
+    UPDATE public.import_batches
+    SET status = 'applying'
+    WHERE id = p_batch_id;
+
+    FOR v_row IN
+      SELECT * FROM public.import_rows
+      WHERE batch_id = p_batch_id
+      ORDER BY row_number
+      FOR UPDATE
+    LOOP
+      IF v_row.proposed_action = 'error' THEN
+        RAISE EXCEPTION 'batch contains invalid import rows' USING ERRCODE = '22023';
+      END IF;
+
+      IF v_row.proposed_action = 'skip' THEN
+        UPDATE public.import_rows SET status = 'skipped', updated_at = now() WHERE id = v_row.id;
+        v_skipped := v_skipped + 1;
+        CONTINUE;
+      END IF;
+
+      v_payload := v_row.normalized_payload;
+      IF v_payload IS NULL THEN
+        RAISE EXCEPTION 'validated row has no normalized payload' USING ERRCODE = '22023';
+      END IF;
+
+      v_category_id := NULL;
+      v_category_name := NULL;
+      SELECT id, name_ru INTO v_category_id, v_category_name
+      FROM public.categories
+      WHERE slug = v_payload->>'category_slug'
+        AND status <> 'archived'
+      LIMIT 1;
+      IF v_category_id IS NULL THEN
+        RAISE EXCEPTION 'category not found for import row %', v_row.row_number USING ERRCODE = '23503';
+      END IF;
+
+      v_brand_id := NULL;
+      IF NULLIF(v_payload->>'brand_slug', '') IS NOT NULL THEN
+        SELECT id INTO v_brand_id
+        FROM public.brands
+        WHERE slug = v_payload->>'brand_slug'
+          AND status <> 'archived'
+        LIMIT 1;
+        IF v_brand_id IS NULL THEN
+          RAISE EXCEPTION 'brand not found for import row %', v_row.row_number USING ERRCODE = '23503';
+        END IF;
+      END IF;
+
+      v_product_id := v_row.matched_product_id;
+      IF v_row.proposed_action = 'update' AND v_product_id IS NULL THEN
+        SELECT p.id INTO v_product_id
+        FROM public.products p
+        WHERE (NULLIF(v_payload->>'sku', '') IS NOT NULL AND p.sku = v_payload->>'sku')
+           OR (
+             NULLIF(v_payload->>'external_id', '') IS NOT NULL
+             AND p.external_id = v_payload->>'external_id'
+             AND p.source_type = v_payload->>'source_type'
+             AND COALESCE(p.source_reference, '') = COALESCE(v_payload->>'source_reference', '')
+           )
+        LIMIT 1;
+      END IF;
+
+      IF v_row.proposed_action = 'create' THEN
+        IF NULLIF(v_payload->>'sku', '') IS NULL THEN
+          RAISE EXCEPTION 'new import row % has no SKU' , v_row.row_number USING ERRCODE = '23514';
+        END IF;
+        INSERT INTO public.products (
+          name, category, description, image_url, sort_order,
+          sku, external_id, slug, category_id, brand_id,
+          name_ru, name_kk, short_description_ru, short_description_kk,
+          description_ru, description_kk, price_mode, price_amount, old_price_amount,
+          currency, stock_status, publication_status, publish_ru, publish_kk,
+          translation_status_kk, is_featured, source_type, source_reference, source_hash
+        ) VALUES (
+          v_payload->>'name_ru', v_category_name, v_payload->>'description_ru', v_payload->>'image_url', 0,
+          NULLIF(v_payload->>'sku', ''), NULLIF(v_payload->>'external_id', ''), NULLIF(v_payload->>'slug', ''), v_category_id, v_brand_id,
+          v_payload->>'name_ru', NULLIF(v_payload->>'name_kk', ''), NULLIF(v_payload->>'short_description_ru', ''), NULLIF(v_payload->>'short_description_kk', ''),
+          NULLIF(v_payload->>'description_ru', ''), NULLIF(v_payload->>'description_kk', ''), v_payload->>'price_mode',
+          NULLIF(v_payload->>'price_amount', '')::NUMERIC, NULLIF(v_payload->>'old_price_amount', '')::NUMERIC,
+          'KZT', v_payload->>'stock_status', 'draft', false, false,
+          v_payload->>'translation_status_kk', COALESCE((v_payload->>'is_featured')::BOOLEAN, false),
+          v_payload->>'source_type', NULLIF(v_payload->>'source_reference', ''), v_payload->>'source_hash'
+        ) RETURNING id INTO v_product_id;
+        v_created := v_created + 1;
+      ELSE
+        IF v_product_id IS NULL THEN
+          RAISE EXCEPTION 'matching product disappeared for import row %', v_row.row_number USING ERRCODE = '23503';
+        END IF;
+        UPDATE public.products
+        SET name = v_payload->>'name_ru',
+            category = v_category_name,
+            description = v_payload->>'description_ru',
+            image_url = NULLIF(v_payload->>'image_url', ''),
+            sku = NULLIF(v_payload->>'sku', ''),
+            external_id = NULLIF(v_payload->>'external_id', ''),
+            slug = NULLIF(v_payload->>'slug', ''),
+            category_id = v_category_id,
+            brand_id = v_brand_id,
+            name_ru = v_payload->>'name_ru',
+            name_kk = NULLIF(v_payload->>'name_kk', ''),
+            short_description_ru = NULLIF(v_payload->>'short_description_ru', ''),
+            short_description_kk = NULLIF(v_payload->>'short_description_kk', ''),
+            description_ru = NULLIF(v_payload->>'description_ru', ''),
+            description_kk = NULLIF(v_payload->>'description_kk', ''),
+            price_mode = v_payload->>'price_mode',
+            price_amount = NULLIF(v_payload->>'price_amount', '')::NUMERIC,
+            old_price_amount = NULLIF(v_payload->>'old_price_amount', '')::NUMERIC,
+            currency = 'KZT',
+            stock_status = v_payload->>'stock_status',
+            publication_status = CASE WHEN v_payload->>'publication_status' = 'published' THEN 'draft' ELSE v_payload->>'publication_status' END,
+            publish_ru = COALESCE((v_payload->>'publish_ru')::BOOLEAN, false),
+            publish_kk = COALESCE((v_payload->>'publish_kk')::BOOLEAN, false),
+            translation_status_kk = v_payload->>'translation_status_kk',
+            is_featured = COALESCE((v_payload->>'is_featured')::BOOLEAN, false),
+            source_type = v_payload->>'source_type',
+            source_reference = NULLIF(v_payload->>'source_reference', ''),
+            source_hash = v_payload->>'source_hash',
+            updated_at = now()
+        WHERE id = v_product_id;
+        IF NOT FOUND THEN
+          RAISE EXCEPTION 'matching product disappeared for import row %', v_row.row_number USING ERRCODE = '23503';
+        END IF;
+        v_updated := v_updated + 1;
+      END IF;
+
+      UPDATE public.import_rows
+      SET matched_product_id = v_product_id, status = 'applied', updated_at = now()
+      WHERE id = v_row.id;
+    END LOOP;
+
+    v_result := jsonb_build_object(
+      'status', 'completed', 'idempotent', false, 'created', v_created,
+      'updated', v_updated, 'skipped', v_skipped, 'source_hash', v_batch.source_hash
+    );
+    UPDATE public.import_batches
+    SET status = 'completed', applied_at = now(), summary = COALESCE(summary, '{}'::jsonb) || v_result
+    WHERE id = p_batch_id;
+    RETURN v_result;
+
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLSTATE = '42501' THEN
+      RAISE;
+    END IF;
+    GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+    UPDATE public.import_rows
+    SET status = 'failed', updated_at = now()
+    WHERE batch_id = p_batch_id AND status NOT IN ('applied', 'skipped');
+    UPDATE public.import_batches
+    SET status = 'failed', summary = COALESCE(summary, '{}'::jsonb) || jsonb_build_object('status', 'failed', 'error', 'apply failed', 'error_code', SQLSTATE)
+    WHERE id = p_batch_id;
+    RETURN jsonb_build_object('status', 'failed', 'error', 'apply failed', 'error_code', SQLSTATE);
+  END;
+END;
+$func$;
+
+REVOKE ALL ON FUNCTION public.apply_import_batch(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.apply_import_batch(UUID) TO authenticated;

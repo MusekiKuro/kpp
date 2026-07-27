@@ -1,18 +1,29 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
-import {
-  createAuthedClient,
-  getAccessTokenFromRequest,
-  isAdminUser,
-} from '@/lib/api-auth'
+import { isAdminUser } from '@/lib/auth-roles'
 
 export async function proxy(request) {
-  const accessToken = getAccessTokenFromRequest(request)
+  let response = NextResponse.next({ request })
 
-  if (!accessToken) {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
-  }
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
 
-  const supabase = createAuthedClient(accessToken)
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
@@ -23,9 +34,9 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/((?!login).*)'],
+  matcher: ['/admin', '/admin/((?!login(?:/|$)).*)'],
 }

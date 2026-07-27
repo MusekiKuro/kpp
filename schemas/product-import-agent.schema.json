@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nurset.local/schemas/product-import-agent.schema.json",
+  "title": "Nurset product import agent document",
+  "description": "A normalized JSON array, bare rows object, or a versioned envelope document. Each row follows import-product-row.schema.json.",
+  "oneOf": [
+    {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5000,
+      "items": { "$ref": "./import-product-row.schema.json" }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rows"],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5000,
+          "items": { "$ref": "./import-product-row.schema.json" }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "records"],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "description": "Business contract version of this envelope. Must be '1.1.0'.",
+          "const": "1.1.0"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional free-form metadata about the import session (source file, agent run ID, etc).",
+          "additionalProperties": true
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5000,
+          "items": { "$ref": "./import-product-row.schema.json" }
+        },
+        "provenance": {
+          "type": "array",
+          "description": "Per-field provenance entries explaining where each extracted value came from.",
+          "items": {
+            "type": "object",
+            "required": ["record_index", "field", "source_location"],
+            "additionalProperties": false,
+            "properties": {
+              "record_index": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Zero-based index into the records array."
+              },
+              "field": {
+                "type": "string",
+                "description": "The output field name this provenance entry describes."
+              },
+              "source_location": {
+                "type": "string",
+                "description": "Human-readable location in the source (e.g. 'row 3, column B', 'page 2, paragraph 4')."
+              },
+              "raw_value": {
+                "type": ["string", "number", "boolean", "null"],
+                "description": "The verbatim value as extracted from the source before normalization."
+              },
+              "transformed": {
+                "type": "boolean",
+                "description": "True if the value was coerced or normalized from the raw form.",
+                "default": false
+              },
+              "transformation_note": {
+                "type": ["string", "null"],
+                "description": "Description of any normalization or coercion applied.",
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Machine-readable warnings generated during extraction.",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Stable warning code.",
+                "enum": [
+                  "missing_value",
+                  "conflicting_values",
+                  "invalid_value",
+                  "ignored_instruction",
+                  "suspected_prompt_injection",
+                  "normalization_coercion"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable warning message.",
+                "maxLength": 1000
+              },
+              "record_index": {
+                "type": ["integer", "null"],
+                "minimum": 0,
+                "description": "Zero-based index into records, or null if warning is document-level."
+              },
+              "field": {
+                "type": ["string", "null"],
+                "description": "The affected output field name, or null if not field-specific."
+              },
+              "source_location": {
+                "type": ["string", "null"],
+                "description": "Location in the source document, if known."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

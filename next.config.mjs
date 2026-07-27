@@ -4,11 +4,47 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'files.foxtrot.com.ua',
       },
       {
-        protocol: 'http',
-        hostname: '**',
+        protocol: 'https',
+        hostname: 'hp-rus.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kvanto.com.ua',
+      },
+      {
+        protocol: 'https',
+        hostname: 'laptopmedia.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'resources.cdn-kaspi.kz',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.notebookcheck.it',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.regard.ru',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.technodom.kz',
+      },
+      {
+        protocol: 'https',
+        hostname: 'xstore.md',
+      },
+      {
+        protocol: 'https',
+        hostname: 'zeajipsclthtdmqdpahz.supabase.co',
       },
     ],
   },

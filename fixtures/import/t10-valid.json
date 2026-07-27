@@ -1,0 +1,29 @@
+[
+  {
+    "source_type": "json",
+    "source_reference": "agent-fixture",
+    "source_hash": null,
+    "external_id": "AGENT-001",
+    "sku": "AGENT-001",
+    "slug": "agent-fixture-product",
+    "category_slug": "office",
+    "brand_slug": null,
+    "name_ru": "Тестовый товар",
+    "name_kk": null,
+    "short_description_ru": null,
+    "short_description_kk": null,
+    "description_ru": null,
+    "description_kk": null,
+    "price_mode": "request",
+    "price_amount": null,
+    "old_price_amount": null,
+    "currency": "KZT",
+    "stock_status": "unknown",
+    "publication_status": "draft",
+    "publish_ru": false,
+    "publish_kk": false,
+    "translation_status_kk": "missing",
+    "is_featured": false,
+    "image_url": null
+  }
+]

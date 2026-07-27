@@ -1,10 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useCart } from './CartProvider';
+import { DEFAULT_LOCALE, isLocale, localizedPath } from '@/lib/i18n/config';
+import { getDictionary } from '@/lib/i18n/dictionaries';
 
 export default function CartButton() {
   const { items } = useCart();
+  const params = useParams();
+  const locale = isLocale(params?.locale) ? params.locale : DEFAULT_LOCALE;
+  const dictionary = getDictionary(locale);
 
   const totalQty = items.reduce((sum, item) => sum + item.qty, 0);
 
@@ -13,9 +19,9 @@ export default function CartButton() {
 
   return (
     <Link
-      href="/cart"
+      href={localizedPath(locale, '/request')}
       className="fixed bottom-6 right-24 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/30 hover:shadow-xl hover:shadow-brand-500/40 hover:-translate-y-1 transition-all"
-      aria-label={`Корзина: ${totalQty} товаров`}
+      aria-label={`${dictionary.navigation.request}: ${totalQty}`}
     >
       {/* Cart icon */}
       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

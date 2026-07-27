@@ -1,8 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
 
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!serviceRoleKey) {
+  console.error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
 const supabase = createClient(
   'https://zeajipsclthtdmqdpahz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplYWppcHNjbHRodGRtcWRwYWh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTI0MjcyMCwiZXhwIjoyMDk2ODE4NzIwfQ.ROmrUgohgbmMNg-hmmhYefjzXtdMrGIa3SN_bqvofMo'
+  serviceRoleKey
 );
 
 async function main() {
@@ -19,4 +26,7 @@ async function main() {
   console.log(JSON.stringify(data, null, 2));
 }
 
-main();
+main().catch(() => {
+  console.error('Product listing failed.');
+  process.exitCode = 1;
+});

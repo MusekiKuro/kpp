@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/api-auth'
 import { createServerClient } from '@/lib/supabase-server'
-import { requireAuth, requireAdmin } from '@/lib/api-auth'
+import {
+  readJsonBody,
+  RequestValidationError,
+  validateOrderUpdate,
+  validateUUIDBody,
+} from '@/lib/request-validation'
+
+const ORDER_STATUSES = ['new', 'in_progress', 'done']
+
+function validationResponse(error) {
+  return NextResponse.json({ error: error.message }, { status: error.status || 400 })
+}
+
+function logDatabaseError(operation, error) {
+  console.error(`Orders API ${operation} failed:`, {
+    message: error?.message,
+    code: error?.code,
+    details: error?.details,
+  })
+}
 
 export async function GET(request) {
   const auth = await requireAdmin(request)
@@ -13,11 +33,13 @@ export async function GET(request) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      logDatabaseError('GET', error)
+      return NextResponse.json({ error: 'Unable to load orders' }, { status: 500 })
     }
 
     return NextResponse.json(data)
-  } catch (err) {
+  } catch (error) {
+    console.error('Orders API GET crashed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -27,61 +49,28 @@ export async function DELETE(request) {
   if (auth.error) return auth.error
 
   try {
-    const body = await request.json()
-    const { id } = body
-
-    if (!id) {
-      return NextResponse.json({ error: 'ID обязателен' }, { status: 400 })
-    }
-
-    const { error } = await auth.supabase
-      .from('orders')
-      .delete()
-      .eq('id', id)
+    const id = validateUUIDBody(await readJsonBody(request))
+    const { error } = await auth.supabase.from('orders').delete().eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      logDatabaseError('DELETE', error)
+      return NextResponse.json({ error: 'Unable to delete order' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
-  } catch (err) {
+  } catch (error) {
+    if (error instanceof RequestValidationError) return validationResponse(error)
+    console.error('Orders API DELETE crashed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request) {
-  try {
-    const supabase = createServerClient()
-    const body = await request.json()
-    const { customer_name, customer_phone, customer_message, items } = body
 
-    if (!customer_name || !customer_phone || !items?.length) {
-      return NextResponse.json(
-        { error: 'Имя, телефон и товары обязательны' },
-        { status: 400 }
-      )
-    }
-
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        customer_name,
-        customer_phone,
-        customer_message: customer_message || '',
-        items,
-        status: 'new',
-      })
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json(data, { status: 201 })
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+export async function POST() {
+  return NextResponse.json(
+    { error: 'Endpoint deprecated. Please submit quote requests via /api/quote-requests.' },
+    { status: 410 }
+  )
 }
 
 export async function PUT(request) {
@@ -89,16 +78,7 @@ export async function PUT(request) {
   if (auth.error) return auth.error
 
   try {
-    const body = await request.json()
-    const { id, status } = body
-
-    if (!id || !status) {
-      return NextResponse.json(
-        { error: 'ID и статус обязательны' },
-        { status: 400 }
-      )
-    }
-
+    const { id, status } = validateOrderUpdate(await readJsonBody(request), ORDER_STATUSES)
     const { data, error } = await auth.supabase
       .from('orders')
       .update({ status })
@@ -107,11 +87,15 @@ export async function PUT(request) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      logDatabaseError('PUT', error)
+      return NextResponse.json({ error: 'Unable to update order' }, { status: 500 })
     }
+    if (!data) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
 
     return NextResponse.json(data)
-  } catch (err) {
+  } catch (error) {
+    if (error instanceof RequestValidationError) return validationResponse(error)
+    console.error('Orders API PUT crashed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

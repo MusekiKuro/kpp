@@ -1,13 +1,17 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/components/CartProvider';
+import { DEFAULT_LOCALE, isLocale, localizedPath } from '@/lib/i18n/config';
 
 export default function ProductCard({ product, showCartButton = true }) {
   const { addToCart } = useCart();
   const router = useRouter();
+  const params = useParams();
+  const locale = isLocale(params?.locale) ? params.locale : DEFAULT_LOCALE;
+  const productPath = localizedPath(locale, `/product/${product.id}`);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -18,12 +22,12 @@ export default function ProductCard({ product, showCartButton = true }) {
   const handleViewInfo = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push(`/product/${product.id}`);
+    router.push(productPath);
   };
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={productPath}
       className="card-hover group flex flex-col rounded-3xl border border-slate-200/60 bg-white overflow-hidden shadow-sm"
     >
       <div className="relative aspect-square overflow-hidden img-preview-bg">

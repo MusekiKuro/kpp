@@ -5,7 +5,7 @@
 -- ============================================================
 
 -- 1. Удаляем старые товары
-DELETE FROM products;
+-- Seed data is upserted by the stable (name, category) key.
 
 -- 2. Вставляем новые
 INSERT INTO products (name, category, description, image_url, sort_order) VALUES
@@ -564,4 +564,34 @@ Smart TV: Android TV
 Замок: ключевой с ригельной системой
 Количество полок: 4 регулируемые полки
 <!--/FEATURES-->
-Надежный металлический шкаф для хранения документов и офисных бумаг.', 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=600&auto=format&fit=crop&q=80', 66);
+Надежный металлический шкаф для хранения документов и офисных бумаг.', 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=600&auto=format&fit=crop&q=80', 66)
+ON CONFLICT (name, category) DO UPDATE SET
+  description = EXCLUDED.description,
+  image_url = EXCLUDED.image_url,
+  sort_order = EXCLUDED.sort_order;
+
+-- T03 compatibility backfill. Requires the additive T02 migration.
+-- This populates only facts present in the legacy seed: RU fields and categories.
+-- SKU, KZ translation, and uncertain brands remain unset for human review.
+INSERT INTO public.categories (slug, name_ru, status) VALUES
+  ('noutbuki', 'Ноутбуки', 'draft'),
+  ('monobloki', 'Моноблоки', 'draft'),
+  ('televizory', 'Телевизоры', 'draft'),
+  ('konditsionery', 'Кондиционеры', 'draft'),
+  ('interaktivnye-paneli', 'Интерактивные панели', 'draft'),
+  ('mebel', 'Мебель', 'draft')
+ON CONFLICT (slug) DO NOTHING;
+
+UPDATE public.products AS p
+SET
+  name_ru = COALESCE(NULLIF(p.name_ru, ''), NULLIF(btrim(p.name), '')),
+  description_ru = COALESCE(NULLIF(p.description_ru, ''), p.description),
+  category_id = COALESCE(p.category_id, c.id)
+FROM public.categories AS c
+WHERE c.name_ru = p.category
+  AND (
+    p.name_ru IS NULL
+    OR p.name_ru = ''
+    OR p.description_ru IS NULL
+    OR p.category_id IS DISTINCT FROM c.id
+  );

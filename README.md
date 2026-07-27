@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Nurset
 
-## Getting Started
+Nurset is a localized RU/KZ corporate catalog for products, catalog requests,
+and an authenticated admin CMS. The public application does not expose a
+service-role Supabase credential.
 
-First, run the development server:
+## Current release status
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The repository has passed the local static suite described below. It is not
+release-ready until the human gates in [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+are completed, especially the open privileged-key incident, staging RLS
+evidence, migration/backfill/import rehearsal, owner content, and production
+hosting/rate-limit decisions.
+
+## Local setup
+
+Use Node.js and the versions resolved by `package-lock.json`. Create an ignored
+`.env.local` with values supplied through the approved secret manager:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=<Supabase project URL>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<Supabase anon key>
+SUPABASE_SERVICE_ROLE_KEY=<server-only service-role key>
+NEXT_PUBLIC_SITE_URL=<canonical public origin, for example https://catalog.example>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`SUPABASE_SERVICE_ROLE_KEY` must never use a `NEXT_PUBLIC_*` name, be committed,
+or be imported by a client component. `NEXT_PUBLIC_SITE_URL` must be the final
+HTTPS origin before canonical URLs, hreflang, robots, or sitemap output are
+verified.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Install and run the development server:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
 
-## Learn More
+Public routes are localized under `/ru` and `/kk`. Corporate pages are
+`about`, `delivery-warranty`, and `contacts`; the privacy page is a noindex
+content shell until the owner supplies approved legal text. Services and blog
+routes are intentionally out of scope.
 
-To learn more about Next.js, take a look at the following resources:
+## Local verification
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run these commands from the repository root and retain their output with the
+release evidence:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```powershell
+npm.cmd run security:scan
+npm.cmd run db:contract-check
+npm.cmd run test
+npm.cmd run lint
+npm.cmd run build
+git diff --check
+npm.cmd run backfill:dry-run
+npm.cmd run backfill:dry-run -- --format sql
+npm.cmd run import:dry-run -- --input fixtures/import/t09-valid.json
+npm.cmd run import:dry-run -- --input fixtures/import/t10-valid.json
+npm.cmd run import:dry-run -- --input fixtures/import/t10-invalid.json
+npm.cmd run import:dry-run -- --input fixtures/import/t09-malformed.csv
+```
 
-## Deploy on Vercel
+Invalid import fixtures are expected to exit non-zero and report reviewable
+validation errors without applying rows. The dry-run and generated SQL do not
+apply anything to Supabase.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`npm.cmd run storage:cleanup` is an operational worker, not a local verification
+command. Run it only after the cleanup migrations have been applied and only in
+an approved environment with the service-role secret supplied by its secret
+store.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Release procedure
+
+Follow [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md). Database access,
+credential rotation, remote history review, production migration, deployment,
+and rollback are human-owned gates. This repository intentionally does not
+provide an agent command for production SQL or deployment.
+
+The dependency-ordered staging and import-automation phase is documented in
+[docs/NEXT_PHASE_HANDOFF.md](docs/NEXT_PHASE_HANDOFF.md).
