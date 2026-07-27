@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase-server'
+import { createServiceRoleClient } from '@/lib/supabase-server'
 import { isUUID } from '@/lib/domain-contracts.mjs'
 
 const PREVIEW_SELECT = 'id,slug,sku,name_ru,name_kk,image_url,price_mode,price_amount,old_price_amount,currency,stock_status,publication_status,publish_ru,publish_kk,translation_status_kk'
@@ -14,7 +14,10 @@ export async function GET(request) {
 
   try {
     const publishField = locale === 'kk' ? 'publish_kk' : 'publish_ru'
-    let query = createServerClient()
+    // The base products table is intentionally private to admins. This server-only
+    // preview still needs to resolve the cart, so use the service-role client while
+    // retaining the published-locale predicates below as the public boundary.
+    let query = createServiceRoleClient()
       .from('products')
       .select(PREVIEW_SELECT)
       .eq('publication_status', 'published')

@@ -87,6 +87,14 @@ test('snapshot enrichment ignores client fields and requires published locale da
   }), /unavailable/i)
 })
 
+test('quote preview resolves private products through the server-only client', async () => {
+  const route = await readFile(new URL('../app/api/quote-requests/preview/route.js', import.meta.url), 'utf8')
+  assert.match(route, /createServiceRoleClient/)
+  assert.doesNotMatch(route, /createServerClient/)
+  assert.match(route, /\.eq\('publication_status', 'published'\)/)
+  assert.match(route, /\.eq\(publishField, true\)/)
+})
+
 test('quote CSV prefixes formula-like cells', () => {
   const csv = buildQuoteCsv([{ id: 'q1', customer_name: '=HYPERLINK("bad")', customer_phone: '+77001234567', status: 'new', locale: 'ru', items: [{ name_snapshot: '@item', quantity: 1 }] }])
   assert.match(csv, /'=HYPERLINK/)
