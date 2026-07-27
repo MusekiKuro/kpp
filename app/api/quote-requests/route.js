@@ -23,6 +23,12 @@ const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000
 const quoteIdempotency = globalThis.__nursetQuoteIdempotency || new Map()
 globalThis.__nursetQuoteIdempotency = quoteIdempotency
 
+function quoteRequestsAreEnabled() {
+  // Keep local development usable, but require an explicit production opt-in.
+  // This prevents collecting personal data before the legal texts are published.
+  return process.env.NODE_ENV !== 'production' || process.env.QUOTE_REQUESTS_ENABLED === 'true'
+}
+
 function validationResponse(error) {
   return NextResponse.json({ error: error.message }, { status: error.status || 400 })
 }
@@ -149,6 +155,13 @@ function pruneIdempotency() {
 }
 
 export async function POST(request) {
+  if (!quoteRequestsAreEnabled()) {
+    return NextResponse.json(
+      { error: 'Quote requests are temporarily unavailable' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
+
   const rateLimit = checkRateLimit(request, { limit: 5, windowMs: 60_000, scope: 'quote-requests' })
   if (!rateLimit.allowed) {
     return NextResponse.json(

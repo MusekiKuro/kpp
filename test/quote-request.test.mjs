@@ -95,6 +95,15 @@ test('quote preview resolves private products through the server-only client', a
   assert.match(route, /\.eq\(publishField, true\)/)
 })
 
+test('production quote intake requires an explicit enable flag and the public page hides the form by default', async () => {
+  const route = await readFile(new URL('../app/api/quote-requests/route.js', import.meta.url), 'utf8')
+  const page = await readFile(new URL('../app/(public)/[locale]/request/page.js', import.meta.url), 'utf8')
+  assert.match(route, /process\.env\.NODE_ENV !== 'production' \|\| process\.env\.QUOTE_REQUESTS_ENABLED === 'true'/)
+  assert.match(route, /status: 503, headers: \{ 'Cache-Control': 'no-store' \}/)
+  assert.match(page, /process\.env\.NEXT_PUBLIC_QUOTE_REQUESTS_ENABLED === 'true'/)
+  assert.match(page, /REQUESTS_DISABLED_COPY/)
+})
+
 test('quote CSV prefixes formula-like cells', () => {
   const csv = buildQuoteCsv([{ id: 'q1', customer_name: '=HYPERLINK("bad")', customer_phone: '+77001234567', status: 'new', locale: 'ru', items: [{ name_snapshot: '@item', quantity: 1 }] }])
   assert.match(csv, /'=HYPERLINK/)
